@@ -34,15 +34,11 @@ public class SwerveModule extends SubsystemBase {
   private MotorInputs m_angleMotorInputs;
 
   public SwerveModule(
-      int driveMotorCanId, int angleMotorCanId, int angleEncoderCanId, Angle angleOffset) {
+      MotorIO driveMotor, MotorIO angleMotor, int angleEncoderCanId, Angle angleOffset) {
 
-    m_drivingMotor = new MotorIOTalonFX(driveMotorCanId);
-    m_angleMotor = new MotorIOSparkMax(angleMotorCanId);
+    m_drivingMotor = driveMotor;
+    m_angleMotor = angleMotor;
     m_angleAbsoluteEncoder = new CANcoder(angleEncoderCanId);
-
-    m_drivingMotor.config(Configs.Chassis.DriveConfig);
-
-    m_angleMotor.config(Configs.Chassis.TurnConfig);
 
     m_angleAbsoluteEncoder
         .getConfigurator()

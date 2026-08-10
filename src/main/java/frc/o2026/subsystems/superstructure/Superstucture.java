@@ -27,7 +27,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
-import frc.lib.Alliance;
+import frc.lib.Util;
 import frc.lib.hardware.TOF.TOFIO;
 import frc.lib.hardware.motor.MotorIO;
 import frc.lib.hardware.motor.MotorIO.MotorInputs;
@@ -283,7 +283,7 @@ public class Superstucture extends SubsystemBase {
     var pose = RobotState.getPoseEst().toPose2d();
 
     var hub =
-        Alliance.flipOnRed(new Pose2d(Constants.Field.BlueHub, Rotation2d.kZero)).getTranslation();
+        Util.flipOnRed(new Pose2d(Constants.Field.BlueHub, Rotation2d.kZero)).getTranslation();
 
     var angle = pose.getRotation().minus(pose.getTranslation().minus(hub).getAngle());
 

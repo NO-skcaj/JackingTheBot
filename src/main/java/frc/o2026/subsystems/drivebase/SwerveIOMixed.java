@@ -18,8 +18,11 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import frc.lib.hardware.gyro.GyroIO;
 import frc.lib.hardware.gyro.GyroIONavX;
+import frc.lib.hardware.motor.ctre.MotorIOTalonFX;
+import frc.lib.hardware.motor.rev.MotorIOSparkMax;
 import frc.lib.hardware.vision.poseVision.PoseCameraIO;
 import frc.lib.hardware.vision.poseVision.PoseVision;
+import frc.o2026.Configs;
 import frc.o2026.Constants;
 import org.littletonrobotics.junction.Logger;
 
@@ -44,7 +47,7 @@ import org.littletonrobotics.junction.Logger;
 ///   ---  +-------------------------------------------------------------------+
 ///        |<----------------------------- 16.56 m --------------------------->|
 ///                                       Top View
-public class SwerveIOReal implements SwerveIO {
+public class SwerveIOMixed implements SwerveIO {
 
   // Swerve module order for kinematics calculations
   //
@@ -58,26 +61,34 @@ public class SwerveIOReal implements SwerveIO {
 
   private SwerveModule m_frSwerveModules =
       new SwerveModule(
-          Constants.CanIds.FrontRightDriveId,
-          Constants.CanIds.FrontRightTurnId,
+          new MotorIOTalonFX(Constants.CanIds.FrontRightDriveId)
+            .withConfig(Configs.Chassis.DriveConfig),
+          new MotorIOSparkMax(Constants.CanIds.FrontRightTurnId)
+            .withConfig(Configs.Chassis.TurnConfig),
           Constants.CanIds.FrontRightEncoderId,
           Constants.Chassis.FrontRightForwardsAngle);
   private SwerveModule m_flSwerveModules =
       new SwerveModule(
-          Constants.CanIds.FrontLeftDriveId,
-          Constants.CanIds.FrontLeftTurnId,
+          new MotorIOTalonFX(Constants.CanIds.FrontLeftDriveId)
+            .withConfig(Configs.Chassis.DriveConfig),
+          new MotorIOSparkMax(Constants.CanIds.FrontLeftTurnId)
+            .withConfig(Configs.Chassis.TurnConfig),
           Constants.CanIds.FrontLeftEncoderId,
           Constants.Chassis.FrontLeftForwardsAngle);
   private SwerveModule m_brSwerveModules =
       new SwerveModule(
-          Constants.CanIds.BackRightDriveId,
-          Constants.CanIds.BackRightTurnId,
+          new MotorIOTalonFX(Constants.CanIds.BackRightDriveId)
+            .withConfig(Configs.Chassis.DriveConfig),
+          new MotorIOSparkMax(Constants.CanIds.BackRightTurnId)
+            .withConfig(Configs.Chassis.TurnConfig),
           Constants.CanIds.BackRightEncoderId,
           Constants.Chassis.BackRightForwardsAngle);
   private SwerveModule m_blSwerveModules =
       new SwerveModule(
-          Constants.CanIds.BackLeftDriveId,
-          Constants.CanIds.BackLeftTurnId,
+          new MotorIOTalonFX(Constants.CanIds.BackLeftDriveId)
+            .withConfig(Configs.Chassis.DriveConfig),
+          new MotorIOSparkMax(Constants.CanIds.BackLeftTurnId)
+            .withConfig(Configs.Chassis.TurnConfig),
           Constants.CanIds.BackLeftEncoderId,
           Constants.Chassis.BackLeftForwardsAngle);
 
@@ -92,7 +103,7 @@ public class SwerveIOReal implements SwerveIO {
 
   private GyroIO m_GyroIO2 = new GyroIONavX();
 
-  public SwerveIOReal(GyroIO gyroIO, PoseCameraIO... cameras) {
+  public SwerveIOMixed(GyroIO gyroIO, PoseCameraIO... cameras) {
 
     m_gyroIO = gyroIO;
 

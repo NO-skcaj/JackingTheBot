@@ -28,6 +28,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.Alliance;
+import frc.lib.Util;
 import frc.lib.hardware.vision.objectVision.ObjectCameraIO;
 import frc.lib.hardware.vision.objectVision.ObjectVision;
 import frc.o2026.Configs;
@@ -88,7 +89,7 @@ public class Swerve extends SubsystemBase {
             // Rotation PID constants
             new PIDConstants(1.0, 0.0, 0.0)),
         config,
-        Alliance::isRed,
+        Util::isRed,
         this // Subsystem req
         );
 
@@ -102,7 +103,7 @@ public class Swerve extends SubsystemBase {
                 new PIDController(4.0, 0.2, 0.1),
                 new PIDController(0.2, 0.0, 0.0))
             .withTRatioBasedTranslationHandoffs(true)
-            .withShouldFlip(Alliance::isRed);
+            .withShouldFlip(Util::isRed);
   }
 
   public ChassisSpeeds getChassisSpeeds() {
@@ -180,12 +181,12 @@ public class Swerve extends SubsystemBase {
         var measure = RobotState.getPoseEst().toPose2d();
         drive(
             new ChassisSpeeds(
-                m_xController.calculate(-measure.getX(), m_desiredState.poseTarget.getX()),
-                m_yController.calculate(-measure.getY(), m_desiredState.poseTarget.getY()),
+                m_xController.calculate(measure.getX(), m_desiredState.poseTarget.getX()),
+                m_yController.calculate(measure.getY(), m_desiredState.poseTarget.getY()),
                 m_rotController.calculate(
                     measure.getRotation().getRadians(),
                     m_desiredState.poseTarget.getRotation().getRadians())),
-            m_fieldCentricity);
+            true);
         break;
 
       case aim:
@@ -251,7 +252,7 @@ public class Swerve extends SubsystemBase {
         fieldRelative
             ? ChassisSpeeds.fromFieldRelativeSpeeds(
                 speeds,
-                (Alliance.isRed() && m_desiredState != DesiredState.pidPose
+                (Util.isRed() && m_desiredState != DesiredState.pidPose
                     ? getHeading()
                     : getHeading().plus(Rotation2d.k180deg)))
             : speeds;
