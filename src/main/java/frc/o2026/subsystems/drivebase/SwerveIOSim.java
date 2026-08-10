@@ -7,6 +7,7 @@
 package frc.o2026.subsystems.drivebase;
 
 import static edu.wpi.first.units.Units.Inches;
+import static edu.wpi.first.units.Units.Pounds;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
@@ -18,11 +19,13 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.system.plant.DCMotor;
 import frc.lib.hardware.vision.poseVision.PoseCameraIO;
 import frc.lib.hardware.vision.poseVision.PoseVision;
+import frc.lib.reefscape.ReefscapeIntakeUtil;
 import frc.lib.sim.SelfControlledSwerveDriveSimulation;
 import frc.lib.sim.SwerveDriveSimulation;
 import frc.o2026.Constants;
 import frc.o2026.RobotState;
-import org.ironmaple.simulation.SimulatedArena;
+import org.ironmaple.simulation.IntakeSimulation;
+import org.ironmaple.simulation.IntakeSimulation.IntakeSide;
 import org.ironmaple.simulation.drivesims.COTS;
 import org.ironmaple.simulation.drivesims.configs.DriveTrainSimulationConfig;
 import org.littletonrobotics.junction.Logger;
@@ -42,6 +45,7 @@ public class SwerveIOSim implements SwerveIO {
   // Create and configure a drivetrain simulation configuration
   private static DriveTrainSimulationConfig driveTrainSimulationConfig =
       DriveTrainSimulationConfig.Default()
+          .withRobotMass(Pounds.of(130.0))
           // Specify gyro type (for realistic gyro drifting and error simulation)
           .withGyro(COTS.ofPigeon2())
           // Specify swerve module (for realistic swerve dynamics)
@@ -57,10 +61,19 @@ public class SwerveIOSim implements SwerveIO {
               Constants.Chassis.WheelBaseMeters.plus(Inches.of(4.5).times(2.0)),
               Constants.Chassis.TrackWidthMeters.plus(Inches.of(4.5).times(2.0)));
 
-  private static SelfControlledSwerveDriveSimulation m_swerveDriveSimulation =
+  private static SelfControlledSwerveDriveSimulation m_swerve =
       new SelfControlledSwerveDriveSimulation(
           new SwerveDriveSimulation(
               driveTrainSimulationConfig, new Pose2d(2, 2, new Rotation2d(Math.PI))));
+
+  private final IntakeSimulation m_intake =
+      IntakeSimulation.OverTheBumperIntake(
+          "Coral",
+          m_swerve.getDriveTrainSimulation(),
+          Inches.of(20.0), // Width
+          Inches.of(12.0),
+          IntakeSide.FRONT,
+          1);
 
   private PoseVision m_vision;
 
@@ -71,23 +84,22 @@ public class SwerveIOSim implements SwerveIO {
     m_vision =
         new PoseVision(
             (data) ->
-                m_swerveDriveSimulation.addVisionEstimation(
+                m_swerve.addVisionEstimation(
                     data.visionMeasurement().toPose2d(),
                     data.timestampSeconds(),
                     data.get2dStdDevs()),
             cameras);
 
-    m_vision.addGyroResetter(newRot -> m_swerveDriveSimulation.resetGyro(newRot.toRotation2d()));
+    m_vision.addGyroResetter(newRot -> m_swerve.resetGyro(newRot.toRotation2d()));
 
-    SimulatedArena.getInstance()
-        .addDriveTrainSimulation(m_swerveDriveSimulation.getDriveTrainSimulation());
+    RobotState.getSimArena().addDriveTrainSimulation(m_swerve.getDriveTrainSimulation());
   }
 
   @Override
   public Pose2d getPose() {
 
-    // return m_swerveDriveSimulation.getOdometryEstimatedPose();
-    return m_swerveDriveSimulation.getOdometryEstimatedPose();
+    // return m_swerve.getOdometryEstimatedPose();
+    return m_swerve.getOdometryEstimatedPose();
   }
 
   @Override
@@ -108,7 +120,7 @@ public class SwerveIOSim implements SwerveIO {
     }
 
     // Set the desired state for each swerve module
-    m_swerveDriveSimulation.runChassisSpeeds(speeds, new Translation2d(), false, true);
+    m_swerve.runChassisSpeeds(speeds, new Translation2d(), false, true);
 
     Logger.recordOutput("Swerve/XMode", m_xMode);
   }
@@ -116,7 +128,7 @@ public class SwerveIOSim implements SwerveIO {
   @Override
   public void setModuleStates(SwerveModuleState[] inputs) {
 
-    m_swerveDriveSimulation.runChassisSpeeds(
+    m_swerve.runChassisSpeeds(
         Constants.Chassis.Kinematics.toChassisSpeeds(
             new SwerveModuleState[] {inputs[0], inputs[1], inputs[2], inputs[3]}),
         new Translation2d(),
@@ -127,26 +139,35 @@ public class SwerveIOSim implements SwerveIO {
   @Override
   public void periodic() {
 
-    m_vision.update(m_swerveDriveSimulation.getActualPoseInSimulationWorld());
+    m_vision.update(m_swerve.getActualPoseInSimulationWorld());
 
-    m_swerveDriveSimulation.periodic();
+    m_swerve.periodic();
 
-    Pose2d simPose = m_swerveDriveSimulation.getActualPoseInSimulationWorld();
+    if (RobotState.isSimIntaking() && !RobotState.isHasCoral()) {
+      m_intake.startIntake();
+      if (m_intake.obtainGamePieceFromIntake() || ReefscapeIntakeUtil.hasNewCoralFromCollector()) {
+        RobotState.setHasCoral(true);
+      }
+    } else {
+      m_intake.stopIntake();
+    }
+
+    Pose2d simPose = m_swerve.getActualPoseInSimulationWorld();
 
     RobotState.setSimRealPose(new Pose3d(simPose));
-    RobotState.setSimSpeeds(m_swerveDriveSimulation.getActualSpeedsFieldRelative());
+    RobotState.setSimSpeeds(m_swerve.getActualSpeedsFieldRelative());
 
     Logger.recordOutput("Sim/Pose3d", simPose);
   }
 
   @Override
   public SwerveModuleState[] getModuleStates() {
-    return m_swerveDriveSimulation.getMeasuredStates();
+    return m_swerve.getMeasuredStates();
   }
 
   @Override
   public SwerveModulePosition[] getModulePositions() {
-    return m_swerveDriveSimulation.getLatestModulePositions();
+    return m_swerve.getLatestModulePositions();
   }
 
   @Override
@@ -165,7 +186,7 @@ public class SwerveIOSim implements SwerveIO {
   @Override
   public void resetPose(Pose2d newPos) {
 
-    m_swerveDriveSimulation.setSimulationWorldPose(newPos);
-    m_swerveDriveSimulation.resetOdometry(newPos);
+    m_swerve.setSimulationWorldPose(newPos);
+    m_swerve.resetOdometry(newPos);
   }
 }

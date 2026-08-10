@@ -155,11 +155,17 @@ public final class MotorIOSparkMax implements MotorIO {
 
   @Override
   public void updateInputs(MotorInputs inputs) {
-    
+
     inputs.velocity = RotationsPerSecond.of(m_encoder.getVelocity());
     inputs.position = Rotations.of(m_encoder.getPosition());
-    inputs.rawPosition = Rotations.of(m_encoder.getPosition() / m_config.getSensorToMechanismRatio());
-    inputs.appliedVolts = Volts.of(m_motor.getAppliedOutput() * (RobotBase.isReal() ? m_motor.getBusVoltage() : SimBattery.getSupplyVoltage().in(Volts)));
+    inputs.rawPosition =
+        Rotations.of(m_encoder.getPosition() / m_config.getSensorToMechanismRatio());
+    inputs.appliedVolts =
+        Volts.of(
+            m_motor.getAppliedOutput()
+                * (RobotBase.isReal()
+                    ? m_motor.getBusVoltage()
+                    : SimBattery.getSupplyVoltage().in(Volts)));
     inputs.statorCurrent = Amps.of(m_motor.getOutputCurrent());
     inputs.temperature = Celsius.of(m_motor.getMotorTemperature());
     inputs.lastReference = m_lastRef;

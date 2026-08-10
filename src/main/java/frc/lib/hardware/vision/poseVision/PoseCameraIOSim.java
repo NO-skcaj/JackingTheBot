@@ -8,6 +8,7 @@ package frc.lib.hardware.vision.poseVision;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import frc.lib.hardware.vision.VisionConfig;
+import frc.o2026.Constants;
 import frc.o2026.RobotState;
 import org.photonvision.simulation.PhotonCameraSim;
 import org.photonvision.simulation.SimCameraProperties;
@@ -38,7 +39,7 @@ public class PoseCameraIOSim extends PoseCameraIOPhoton {
     cameraProp.setAvgLatencyMs(50);
     cameraProp.setLatencyStdDevMs(15);
 
-    m_simCamera = new PhotonCameraSim(m_camera, cameraProp);
+    m_simCamera = new PhotonCameraSim(m_camera, cameraProp, Constants.Vision.TagLayout);
     m_simCamera.enableDrawWireframe(false);
   }
 

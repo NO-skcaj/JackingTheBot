@@ -14,10 +14,8 @@ import static edu.wpi.first.units.Units.Volts;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
@@ -28,11 +26,8 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Voltage;
 import frc.lib.hardware.vision.VisionConfig;
-import frc.lib.hardware.vision.poseVision.PoseCameraIO;
-
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 public final class Constants {
 
@@ -44,8 +39,8 @@ public final class Constants {
 
     public static final Distance CoralDiameter = Inches.of(4.0);
 
-    public static final Translation2d BlueHub = new Translation2d(Inches.of(275.0), Inches.of(179.0));
-
+    public static final Translation2d BlueHub =
+        new Translation2d(Inches.of(275.0), Inches.of(179.0));
   }
 
   public static final class Vision {
@@ -86,7 +81,7 @@ public final class Constants {
                     Inches.of(5.0)), // up
                 new Rotation3d(
                     Degrees.of(90.0), // roll
-                    Degrees.of(-20.0), // pitch
+                    Degrees.of(-45.0), // pitch
                     Degrees.of(0.0)))); // yaw
 
     public static final VisionConfig WebCam =
@@ -103,7 +98,7 @@ public final class Constants {
                     Degrees.of(-90.0)))); // yaw
 
     public static AprilTagFieldLayout TagLayout =
-        AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
+        AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded);
   }
 
   public static final class Superstructure {
@@ -113,63 +108,40 @@ public final class Constants {
 
     public static final double ElevatorGearRatio = (12.0 / 1.0) * (64.0 / 18.0);
     public static final double ElevatorSpoolRadius = Units.inchesToMeters(0.758);
-    public static final double ElevatorMetersToRotations = ElevatorGearRatio / (ElevatorSpoolRadius * 2.0 * Math.PI);
+    public static final double ElevatorMetersToRotations =
+        1 / (ElevatorSpoolRadius * 2.0 * Math.PI);
 
-    public static record ArmPosition(
-        Angle    pivot,
-        Distance elevator,
-        Angle    wrist
-    ) { }
+    public static record ArmPosition(Angle pivot, Distance elevator, Angle wrist) {}
 
-    public static final ArmPosition Starting = new ArmPosition(
-        Degrees.of(45.480), 
-        Meters.of(0.0), 
-        Degrees.of(27.315));
+    public static final ArmPosition Starting =
+        new ArmPosition(Degrees.of(45.480), Inches.of(0.0), Degrees.of(27.315));
 
-    public static final ArmPosition Home = new ArmPosition(
-        Degrees.of(0.0), 
-        Meters.of(0.0),
-        Degrees.of(53.811));
-        
-    public static final ArmPosition GroundIntake = new ArmPosition(
-        Degrees.of(0.0), 
-        Meters.of(0.0),
-        Degrees.of(176.833952));
+    public static final ArmPosition Home =
+        new ArmPosition(Degrees.of(0.0), Inches.of(0.0), Degrees.of(53.811));
 
-    public static final ArmPosition L1F = new ArmPosition(
-        Degrees.of(43.448), 
-        Meters.of(0.0),
-        Degrees.of(66.917056));
-        
-    public static final ArmPosition L2F = new ArmPosition(
-        Degrees.of(35.04), 
-        Inches.of(6.225),
-        Degrees.of(79.288));
-        
-    public static final ArmPosition L3F = new ArmPosition(
-        Degrees.of(51.479), 
-        Meters.of(15.462),
-        Degrees.of(95.726488));
+    public static final ArmPosition GroundIntake =
+        new ArmPosition(Degrees.of(0.0), Inches.of(0.0), Degrees.of(176.833952));
 
-    public static final ArmPosition L4F = new ArmPosition(
-        Degrees.of(64.443), 
-        Meters.of(34.625),
-        Degrees.of(108.690422));
-        
-    public static final ArmPosition L2B = new ArmPosition(
-        Degrees.of(106.562), 
-        Meters.of(0.334246),
-        Degrees.of(38.412369));
-        
-    public static final ArmPosition L3B = new ArmPosition(
-        Degrees.of(100.386), 
-        Meters.of(12.605856),
-        Degrees.of(44.896124));
-        
-    public static final ArmPosition L4B = new ArmPosition(
-        Degrees.of(94.914), 
-        Meters.of(34.625),
-        Degrees.of(49.424149));
+    public static final ArmPosition L1F =
+        new ArmPosition(Degrees.of(43.448), Inches.of(0.0), Degrees.of(66.917056));
+
+    public static final ArmPosition L2F =
+        new ArmPosition(Degrees.of(35.04), Inches.of(6.225), Degrees.of(79.288));
+
+    public static final ArmPosition L3F =
+        new ArmPosition(Degrees.of(51.479), Inches.of(15.462), Degrees.of(95.726488));
+
+    public static final ArmPosition L4F =
+        new ArmPosition(Degrees.of(64.443), Inches.of(34.625), Degrees.of(108.690422));
+
+    public static final ArmPosition L2B =
+        new ArmPosition(Degrees.of(106.562), Inches.of(0.334246), Degrees.of(38.412369));
+
+    public static final ArmPosition L3B =
+        new ArmPosition(Degrees.of(100.386), Inches.of(12.605856), Degrees.of(44.896124));
+
+    public static final ArmPosition L4B =
+        new ArmPosition(Degrees.of(94.914), Inches.of(34.625), Degrees.of(49.424149));
 
     // TODO: test or research reasonable voltages
     public static final Voltage IntakingCoralVolt = Volts.of(5.0);
@@ -240,6 +212,24 @@ public final class Constants {
     public static final int BackRightEncoderId = 03; // CANCoder
 
     public static final int PigeonGyroId = 05; // CTR Pigeon 2.0
+
+    public static final int PivotLeaderMotorId = 41;
+    public static final int PivotLeftFollowerMotorId = 42;
+    public static final int PivotRight1MotorId = 43;
+    public static final int PivotRight2MotorId = 44;
+
+    public static final int ElevatorMotorId = 45;
+
+    public static final int WristMotorId = 46;
+
+    public static final int RollerLeaderMotorId = 47;
+    public static final int RollerFollowerMotorId = 48;
+
+    public static final int HoldSensorId = 49;
+
+    public static final int IntakeSensorLeftId = 50;
+    public static final int IntakeSensorCenterId = 51;
+    public static final int IntakeSensorRightId = 52;
 
     public static final int PdhId = 60; // PDH
   }

@@ -21,6 +21,7 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.util.Units;
@@ -47,8 +48,8 @@ public class Swerve extends SubsystemBase {
 
   FollowPath.Builder m_pathBuilder;
 
-  private PIDController m_xController = new PIDController(2, 0, 0);
-  private PIDController m_yController = new PIDController(2, 0, 0);
+  private PIDController m_xController = new PIDController(5, 0, 0.3);
+  private PIDController m_yController = new PIDController(5, 0, 0.3);
   private PIDController m_rotController = new PIDController(4, 0.0, 0.5);
 
   public Swerve(SwerveIO io, ObjectCameraIO odIo) {
@@ -57,10 +58,10 @@ public class Swerve extends SubsystemBase {
     m_objectDetection = new ObjectVision(odIo);
 
     m_rotController.enableContinuousInput(-Math.PI, Math.PI);
-    m_rotController.setTolerance(Units.degreesToRadians(5.0));
-    m_xController.setTolerance(0.01);
+    m_rotController.setTolerance(Units.degreesToRadians(10.0));
+    m_xController.setTolerance(0.1);
     m_xController.disableContinuousInput();
-    m_yController.setTolerance(0.01);
+    m_yController.setTolerance(0.1);
     m_yController.disableContinuousInput();
 
     RobotConfig config;
@@ -123,14 +124,17 @@ public class Swerve extends SubsystemBase {
 
     m_desiredState = desiredState;
   }
+
   public static enum DesiredState {
     driveField,
     driveRobot,
     driveDefault,
+    pidPose,
     aim,
     aimSOTM,
     intakeAssist,
-    hardStop;
+    hardStop,
+    idle;
 
     public ChassisSpeeds speeds = new ChassisSpeeds();
     public Rotation2d rotationTarget = new Rotation2d();
@@ -152,7 +156,7 @@ public class Swerve extends SubsystemBase {
     }
   }
 
-  private DesiredState m_desiredState;
+  private DesiredState m_desiredState = DesiredState.idle;
 
   @Override
   public void periodic() {
@@ -172,6 +176,18 @@ public class Swerve extends SubsystemBase {
         drive(m_desiredState.speeds, m_fieldCentricity);
         break;
 
+      case pidPose:
+        var measure = RobotState.getPoseEst().toPose2d();
+        drive(
+            new ChassisSpeeds(
+                m_xController.calculate(-measure.getX(), m_desiredState.poseTarget.getX()),
+                m_yController.calculate(-measure.getY(), m_desiredState.poseTarget.getY()),
+                m_rotController.calculate(
+                    measure.getRotation().getRadians(),
+                    m_desiredState.poseTarget.getRotation().getRadians())),
+            m_fieldCentricity);
+        break;
+
       case aim:
         drive(
             new ChassisSpeeds(
@@ -185,15 +201,24 @@ public class Swerve extends SubsystemBase {
 
       case intakeAssist:
         var optDirection = m_objectDetection.directionToObject();
+        var assistSpeeds =
+            new Translation2d(Configs.Chassis.IntakeAssistSpeed.in(MetersPerSecond), 0.0)
+                .rotateBy(getHeading());
         if (optDirection.isPresent())
           drive(
               new ChassisSpeeds(
-                  Configs.Chassis.IntakeSpeed.in(MetersPerSecond),
-                  0.0,
-                  m_rotController.calculate(
-                      m_io.getGyroHeading().getRadians(),
-                      m_objectDetection.directionToObject().get().getRadians())),
-              false);
+                  m_desiredState.speeds.vxMetersPerSecond + assistSpeeds.getX(),
+                  m_desiredState.speeds.vyMetersPerSecond + assistSpeeds.getY(),
+                  m_desiredState.speeds.omegaRadiansPerSecond
+                      + m_rotController.calculate(
+                              m_io.getGyroHeading().getRadians(),
+                              m_objectDetection
+                                  .directionToObject()
+                                  .get()
+                                  .plus(Rotation2d.k180deg)
+                                  .getRadians())
+                          * Configs.Chassis.IntakeAssistRotationPower),
+              m_fieldCentricity);
         break;
 
       case hardStop:
@@ -208,12 +233,14 @@ public class Swerve extends SubsystemBase {
     RobotState.setPoseEst(getPose());
 
     Logger.recordOutput("Swerve/fieldCentric", m_fieldCentricity);
+    Logger.recordOutput("Swerve/d-state", m_desiredState.toString());
     Logger.recordOutput("Swerve/m-speeds", getChassisSpeeds());
     Logger.recordOutput("Swerve/m-states", m_io.getModuleStates());
     Logger.recordOutput("Swerve/m-speeds", getChassisSpeeds());
     Logger.recordOutput("Swerve/m-pose", getPose());
     Logger.recordOutput("Swerve/m-heading", getHeading().getDegrees());
     Logger.recordOutput("Swerve/m-aimed", isAimed());
+    Logger.recordOutput("Swerve/m-isPID", isAtPidPose());
 
     Logger.recordOutput("Swerve/d-aimed", Radians.of(m_rotController.getSetpoint()).in(Degrees));
   }
@@ -223,7 +250,10 @@ public class Swerve extends SubsystemBase {
     var desiredStates =
         fieldRelative
             ? ChassisSpeeds.fromFieldRelativeSpeeds(
-                speeds, (Alliance.isRed() ? getHeading() : getHeading().plus(Rotation2d.k180deg)))
+                speeds,
+                (Alliance.isRed() && m_desiredState != DesiredState.pidPose
+                    ? getHeading()
+                    : getHeading().plus(Rotation2d.k180deg)))
             : speeds;
 
     m_io.driveRobotRelative(desiredStates);
@@ -238,9 +268,9 @@ public class Swerve extends SubsystemBase {
     m_io.resetPose(pose);
   }
 
-  public boolean isAtPose() {
+  public boolean isAtPidPose() {
 
-    return m_xController.atSetpoint() && m_yController.atSetpoint();
+    return m_xController.atSetpoint() && m_yController.atSetpoint() && m_rotController.atSetpoint();
   }
 
   public boolean isAimed() {
@@ -320,7 +350,8 @@ public class Swerve extends SubsystemBase {
 
   public Command toggleFieldCentricity() {
     return runOnce(() -> m_fieldCentricity = !m_fieldCentricity)
-        .withName("Field Centricity Toggle").asProxy();
+        .withName("Field Centricity Toggle")
+        .asProxy();
   }
 
   public Command fieldCentricityOff() {

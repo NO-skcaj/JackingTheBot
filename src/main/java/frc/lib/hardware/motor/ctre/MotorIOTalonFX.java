@@ -7,7 +7,6 @@
 package frc.lib.hardware.motor.ctre;
 
 import static edu.wpi.first.units.Units.Amps;
-import static edu.wpi.first.units.Units.Rotations;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Volts;
@@ -36,7 +35,7 @@ public class MotorIOTalonFX implements MotorIO {
 
   final TalonFX m_motor;
 
-  final StatusSignal<AngularVelocity> m_velocity; 
+  final StatusSignal<AngularVelocity> m_velocity;
   final StatusSignal<Angle> m_position;
   final StatusSignal<Angle> m_rawPosition;
   final StatusSignal<Voltage> m_appliedVolts;
@@ -49,7 +48,7 @@ public class MotorIOTalonFX implements MotorIO {
   public MotorIOTalonFX(int id) {
 
     m_motor = new TalonFX(id);
-    
+
     m_velocity = m_motor.getVelocity();
     m_position = m_motor.getPosition();
     m_rawPosition = m_motor.getRotorPosition();
@@ -121,7 +120,7 @@ public class MotorIOTalonFX implements MotorIO {
     var status = m_motor.setControl(new MotionMagicVelocityVoltage(angleVel));
     Logger.recordOutput("MotorErr/Talon " + m_motor.getDeviceID(), status.toString());
 
-    m_lastRef = angleVel.in(RotationsPerSecond);
+    m_lastRef = m_motor.getClosedLoopReference().getValueAsDouble();
   }
 
   @Override
@@ -132,7 +131,7 @@ public class MotorIOTalonFX implements MotorIO {
     var status = m_motor.setControl(new MotionMagicVoltage(angle));
     Logger.recordOutput("MotorErr/Talon " + m_motor.getDeviceID(), status.toString());
 
-    m_lastRef = angle.in(Rotations);
+    m_lastRef = m_motor.getClosedLoopReference().getValueAsDouble();
   }
 
   @Override
@@ -179,13 +178,12 @@ public class MotorIOTalonFX implements MotorIO {
   @Override
   public void updateInputs(MotorInputs inputs) {
 
-    inputs.velocity = m_velocity.getValue();
-    inputs.position = m_position.getValue();
-    inputs.rawPosition = m_rawPosition.getValue();
-    inputs.appliedVolts = m_appliedVolts.getValue();
-    inputs.statorCurrent = m_currentStator.getValue();
-    // inputs.supplyCurrent = m_currentSupply.getValue();
-    inputs.temperature = m_temperature.getValue();
+    inputs.velocity = m_velocity.refresh().getValue();
+    inputs.position = m_position.refresh().getValue();
+    inputs.rawPosition = m_rawPosition.refresh().getValue();
+    inputs.appliedVolts = m_appliedVolts.refresh().getValue();
+    inputs.statorCurrent = m_currentStator.refresh().getValue();
+    inputs.temperature = m_temperature.refresh().getValue();
     inputs.lastReference = m_lastRef;
   }
 }

@@ -30,15 +30,11 @@ public class MotorIONothing implements MotorIO {
   public void setPosition(Angle angle) {}
 
   public void setVelocity(AngularVelocity angleVel) {}
-  
+
   public void setVoltage(Voltage volts) {}
 
   public void resetEncoder(Angle angle) {}
 
   @Override
-  public void updateInputs(MotorInputs inputs) {
-
-  }
-
-  
+  public void updateInputs(MotorInputs inputs) {}
 }

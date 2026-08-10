@@ -6,14 +6,19 @@
 
 package frc.lib.hardware.motor;
 
-import org.littletonrobotics.junction.LogTable;
-import org.littletonrobotics.junction.inputs.LoggableInputs;
+import static edu.wpi.first.units.Units.Amps;
+import static edu.wpi.first.units.Units.Celsius;
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.RotationsPerSecond;
+import static edu.wpi.first.units.Units.Volts;
 
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
+import org.littletonrobotics.junction.LogTable;
+import org.littletonrobotics.junction.inputs.LoggableInputs;
 
 public interface MotorIO {
 
@@ -30,7 +35,7 @@ public interface MotorIO {
   public void setPosition(Angle angle);
 
   public void setVelocity(AngularVelocity angleVel);
-  
+
   public void setVoltage(Voltage volts);
 
   public void resetEncoder(Angle angle);
@@ -40,13 +45,13 @@ public interface MotorIO {
   // NO @AutoLog because it doesn't work in my static analysis (:
   public static class MotorInputs implements LoggableInputs {
 
-    public AngularVelocity velocity;
-    public Angle position;
-    public Angle rawPosition;
-    public Voltage appliedVolts;
-    public Current statorCurrent;
-    public Temperature temperature;
-    public double lastReference;
+    public AngularVelocity velocity = RotationsPerSecond.of(0.0);
+    public Angle position = Degrees.of(0.0);
+    public Angle rawPosition = Degrees.of(0.0);
+    public Voltage appliedVolts = Volts.of(0.0);
+    public Current statorCurrent = Amps.of(0.0);
+    public Temperature temperature = Celsius.of(0.0);
+    public double lastReference = 0.0;
 
     @Override
     public void toLog(LogTable table) {
@@ -58,7 +63,7 @@ public interface MotorIO {
       table.put("temperature", temperature);
       table.put("lastReference", lastReference);
     }
-    
+
     @Override
     public void fromLog(LogTable table) {
       velocity = table.get("velocity", velocity);

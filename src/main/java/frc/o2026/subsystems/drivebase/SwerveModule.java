@@ -33,7 +33,8 @@ public class SwerveModule extends SubsystemBase {
   private MotorInputs m_drivingMotorInputs;
   private MotorInputs m_angleMotorInputs;
 
-  public SwerveModule(int driveMotorCanId, int angleMotorCanId, int angleEncoderCanId, Angle angleOffset) {
+  public SwerveModule(
+      int driveMotorCanId, int angleMotorCanId, int angleEncoderCanId, Angle angleOffset) {
 
     m_drivingMotor = new MotorIOTalonFX(driveMotorCanId);
     m_angleMotor = new MotorIOSparkMax(angleMotorCanId);

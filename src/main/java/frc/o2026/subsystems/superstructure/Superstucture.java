@@ -1,392 +1,556 @@
+// Copyright (c) 2026-2027 FRC 3824 HVA RoHawktics
+// http://github.com/HVA-FRC-3824
+//
+// Use of this source code is governed by an MIT-style license that can be found in the LICENSE file at
+// the root directory of this project.
+
 package frc.o2026.subsystems.superstructure;
 
 import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Rotations;
 import static edu.wpi.first.units.Units.Volts;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Stream;
-
-import org.littletonrobotics.junction.Logger;
-
-import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 import frc.lib.Alliance;
 import frc.lib.hardware.TOF.TOFIO;
 import frc.lib.hardware.motor.MotorIO;
 import frc.lib.hardware.motor.MotorIO.MotorInputs;
 import frc.lib.hardware.vision.poseVision.PoseCameraIO;
+import frc.lib.reefscape.ReefscapeScoring;
 import frc.o2026.Constants;
-import frc.o2026.RobotState;
 import frc.o2026.Constants.Superstructure.ArmPosition;
+import frc.o2026.RobotState;
 import frc.o2026.subsystems.superstructure.Superstucture.DesiredState.RollerState;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.IntStream;
 import lombok.Getter;
+import org.littletonrobotics.junction.Logger;
 
 public class Superstucture extends SubsystemBase {
-    
-   /// PIVOT
-    
-    // On the left  
-    private final MotorIO m_pivotLeader;
-    private final MotorIO m_pivotLeftFollower;
 
-    // On the right
-    private final MotorIO m_pivotRight1; // Parallel to left leader
-    private final MotorIO m_pivotRight2; // Parallel to left follower
+  /// PIVOT
 
-    private MotorInputs m_pivotInputs = new MotorInputs();
+  // On the left
+  private final MotorIO m_pivotLeader;
+  private final MotorIO m_pivotLeftFollower;
 
-    /// ELEVATOR
-    
-    private MotorIO m_elevator;
-    private MotorInputs m_elevatorInputs = new MotorInputs();
+  // On the right
+  private final MotorIO m_pivotRight1; // Parallel to left leader
+  private final MotorIO m_pivotRight2; // Parallel to left follower
 
-    /// WRIST
+  private MotorInputs m_pivotInputs = new MotorInputs();
 
-    private MotorIO m_wrist;
-    private MotorInputs m_wristInputs = new MotorInputs();
+  /// ELEVATOR
 
-    /// ROLLERS
+  private MotorIO m_elevator;
+  private MotorInputs m_elevatorInputs = new MotorInputs();
 
-    private MotorIO m_rollerLeader;
-    private MotorIO m_rollerFollower;
+  /// WRIST
 
-    private MotorInputs m_rollerInputs = new MotorInputs();
+  private MotorIO m_wrist;
+  private MotorInputs m_wristInputs = new MotorInputs();
 
-    /// CORAL SENSING
-    
-    // This is the CANRange not in a row
-    private TOFIO m_sensor;
+  /// ROLLERS
 
-    public Superstucture(
-        MotorIO pivotLeader, MotorIO pivotLeftFollower, 
-        MotorIO pivotRight1, MotorIO pivotRight2,
-        MotorIO elevator,
-        MotorIO wrist,
-        MotorIO rollerLeader, MotorIO rollerFollower,
-        TOFIO sensor) {
-        
-        m_pivotLeader = pivotLeader;
-        m_pivotLeftFollower = pivotLeftFollower;
-        m_pivotRight1 = pivotRight1;
-        m_pivotRight2 = pivotRight2;
+  private MotorIO m_rollerLeader;
+  private MotorIO m_rollerFollower;
 
-        m_elevator = elevator;
+  private MotorInputs m_rollerInputs = new MotorInputs();
 
-        m_wrist = wrist;
+  /// CORAL SENSING
 
-        m_rollerLeader = rollerLeader;
-        m_rollerFollower = rollerFollower;
+  // This is the CANRange not in a row
+  private TOFIO m_sensor;
 
-        m_sensor = sensor;
-        
-        m_pivotLeftFollower.follow(m_pivotLeader.getId(), false);
-        m_pivotRight1.follow(m_pivotLeader.getId(), true);
-        m_pivotRight2.follow(m_pivotLeader.getId(), true);
+  public Superstucture(
+      MotorIO pivotLeader,
+      MotorIO pivotLeftFollower,
+      MotorIO pivotRight1,
+      MotorIO pivotRight2,
+      MotorIO elevator,
+      MotorIO wrist,
+      MotorIO rollerLeader,
+      MotorIO rollerFollower,
+      TOFIO sensor) {
 
-        m_rollerFollower.follow(m_rollerLeader.getId(), true);
+    m_pivotLeader = pivotLeader;
+    m_pivotLeftFollower = pivotLeftFollower;
+    m_pivotRight1 = pivotRight1;
+    m_pivotRight2 = pivotRight2;
 
-        resetAtStarting();
+    m_elevator = elevator;
+
+    m_wrist = wrist;
+
+    m_rollerLeader = rollerLeader;
+    m_rollerFollower = rollerFollower;
+
+    m_sensor = sensor;
+
+    m_pivotLeftFollower.follow(m_pivotLeader.getId(), false);
+    m_pivotRight1.follow(m_pivotLeader.getId(), true);
+    m_pivotRight2.follow(m_pivotLeader.getId(), true);
+
+    m_rollerFollower.follow(m_rollerLeader.getId(), true);
+
+    resetAtStarting();
+  }
+
+  public static enum DesiredState {
+    startPos,
+    home,
+    groundIntake,
+    L1F,
+    L2F,
+    L3F,
+    L4F,
+    L2B,
+    L3B,
+    L4B;
+
+    public static enum RollerState {
+      intakingCoral,
+      scoringCoral,
+      holdingCoral,
+      intakingAlgae,
+      scoringAlgae,
+      holdingAlgae,
+      idle
     }
 
-    public static enum DesiredState {
-        startPos,
-        home,
-        groundIntake, 
-        L1F, 
-        L2F,
-        L3F, 
-        L4F,
-        L2B,
-        L3B,
-        L4B;
-        
-        public static enum RollerState {
-            intakingCoral,
-            scoringCoral,
-            holdingCoral,
-            intakingAlgae,
-            scoringAlgae,
-            holdingAlgae,
-            idle
-        }
+    @Getter private RollerState roller;
 
-        @Getter private RollerState roller;
-
-        public DesiredState with(RollerState newRoller) {
-            roller = newRoller;
-            return this;
-        }
+    public DesiredState with(RollerState newRoller) {
+      roller = newRoller;
+      return this;
     }
+  }
 
-    public static enum MeasuredState {
-        start,
-        transitioning,
-        atSetPoint;
+  public static enum MeasuredState {
+    start,
+    transitioning,
+    atSetPoint;
+  }
+
+  private DesiredState m_desiredState = DesiredState.startPos.with(RollerState.idle);
+  private MeasuredState m_measuredState = MeasuredState.start;
+
+  // private DesiredState m_lastDesiredState = m_desiredState;
+
+  public void setState(DesiredState newState) {
+
+    if (newState != null && newState.getRoller() != null) {
+      m_desiredState = newState;
+      Logger.recordOutput("Superstructure/d-state", m_desiredState.toString());
+      Logger.recordOutput("Superstructure/d-roller", m_desiredState.roller.toString());
     }
+    ;
+  }
 
-    private DesiredState m_desiredState = DesiredState.startPos;
-    private MeasuredState m_measuredState = MeasuredState.start;
+  public DesiredState getState() {
+    return m_desiredState;
+  }
 
-    private DesiredState m_lastDesiredState = null;
+  public MeasuredState getMeasuredState() {
 
-    public void setState(DesiredState newState) {
+    return m_measuredState;
+  }
 
-        if (newState != null && newState.getRoller() != null)
-            m_desiredState = newState;
-    }
+  @Override
+  public void periodic() {
 
-    public DesiredState getState() { return m_desiredState; }
+    m_pivotLeader.periodic();
+    m_pivotLeftFollower.periodic();
+    m_pivotRight1.periodic();
+    m_pivotRight2.periodic();
 
-    public MeasuredState getMeasuredState() { 
+    m_elevator.periodic();
 
-        return m_measuredState; 
-    }
+    m_wrist.periodic();
 
-    @Override
-    public void periodic() {
+    m_rollerLeader.periodic();
+    m_rollerFollower.periodic();
 
-        m_pivotLeader.updateInputs(m_pivotInputs);
-        Logger.processInputs("Superstructure/pivot", m_pivotInputs);
-        
-        m_elevator.updateInputs(m_elevatorInputs);
-        Logger.processInputs("Superstructure/elevator", m_elevatorInputs);
-        
-        m_wrist.updateInputs(m_wristInputs);
-        Logger.processInputs("Superstructure/wrist", m_wristInputs);
-        
-        m_rollerLeader.updateInputs(m_rollerInputs);
-        Logger.processInputs("Superstructure/wrist", m_rollerInputs);
+    m_pivotLeader.updateInputs(m_pivotInputs);
+    Logger.processInputs("Superstructure/pivot", m_pivotInputs);
 
-        if (!isAtSetpoint())
-            m_measuredState = MeasuredState.transitioning;
-        else if (m_desiredState == DesiredState.startPos && isAtSetpoint())
-            m_measuredState = MeasuredState.start;
-        else if (isAtSetpoint())
-            m_measuredState = MeasuredState.atSetPoint;
-        // No else needed because that is logically impossible
+    m_elevator.updateInputs(m_elevatorInputs);
+    Logger.processInputs("Superstructure/elevator", m_elevatorInputs);
 
-        // Only control motors if requests are new
-        if (!m_lastDesiredState.equals(m_desiredState) &&
-            !m_lastDesiredState.getRoller().equals(m_desiredState.getRoller())) {
+    m_wrist.updateInputs(m_wristInputs);
+    Logger.processInputs("Superstructure/wrist", m_wristInputs);
 
-            var pos = getPosFromState();
+    m_rollerLeader.updateInputs(m_rollerInputs);
+    Logger.processInputs("Superstructure/roller", m_rollerInputs);
 
-            var volts = switch (m_desiredState.getRoller()) {
-                case intakingCoral -> Constants.Superstructure.IntakingCoralVolt;
-                case scoringCoral -> Constants.Superstructure.ScoringCoralVolt;
-                case holdingCoral -> Constants.Superstructure.HoldingCoralVolt;
-                case intakingAlgae -> Constants.Superstructure.IntakingAlgaeVolt;
-                case scoringAlgae -> Constants.Superstructure.ScoringAlgaeVolt;
-                case holdingAlgae -> Constants.Superstructure.HoldingAlgaeVolt;
-                default -> Volts.of(0.0);
-            };
-            
-            m_pivotLeader.setPosition(pos.pivot());
-            m_elevator.setPosition(Rotations.of(pos.elevator().in(Meters) * Constants.Superstructure.ElevatorMetersToRotations));
-            m_wrist.setPosition(pos.pivot());
+    Logger.recordOutput("Superstructure/isAtSetpoint", isAtSetpoint());
 
-            m_rollerLeader.setVoltage(volts);
-            
-            // Remember last state
-            m_lastDesiredState = m_desiredState;
-        }
-    }
+    if (!isAtSetpoint()) m_measuredState = MeasuredState.transitioning;
+    else m_measuredState = MeasuredState.atSetPoint;
+    Logger.recordOutput("Superstructure/m-state", m_measuredState.toString());
+    Logger.recordOutput("Superstructure/m-roller", m_desiredState.roller.toString());
 
-    public ArmPosition getPosFromState() {
+    var pos = getPosFromState();
 
-        return switch (m_desiredState) {
-                case startPos -> Constants.Superstructure.Starting;
-                case home -> Constants.Superstructure.Home;
-                case groundIntake -> Constants.Superstructure.GroundIntake;
-                case L1F -> Constants.Superstructure.L1F;
-                case L2F -> Constants.Superstructure.L2F;
-                case L3F -> Constants.Superstructure.L3F;
-                case L4F -> Constants.Superstructure.L4F;
-                case L2B -> Constants.Superstructure.L2B;
-                case L3B -> Constants.Superstructure.L3B;
-                case L4B -> Constants.Superstructure.L4B;
-                default -> Constants.Superstructure.Home;
-            };
-    }
+    Logger.recordOutput("Superstructure/d-pivot", pos.pivot().in(Rotations));
+    Logger.recordOutput(
+        "Superstructure/d-elevator",
+        pos.elevator().in(Meters) * Constants.Superstructure.ElevatorMetersToRotations);
+    Logger.recordOutput("Superstructure/d-wrist", pos.wrist().in(Rotations));
 
-    public boolean isAtSetpoint() {
+    var volts =
+        switch (m_desiredState.getRoller()) {
+          case intakingCoral -> Constants.Superstructure.IntakingCoralVolt;
+          case scoringCoral -> Constants.Superstructure.ScoringCoralVolt;
+          case holdingCoral -> Constants.Superstructure.HoldingCoralVolt;
+          case intakingAlgae -> Constants.Superstructure.IntakingAlgaeVolt;
+          case scoringAlgae -> Constants.Superstructure.ScoringAlgaeVolt;
+          case holdingAlgae -> Constants.Superstructure.HoldingAlgaeVolt;
+          default -> Volts.of(0.0);
+        };
 
-        // Take the percent error
-        // 100 * ((Desired - Actual) / Actual)
+    RobotState.setSimIntaking(
+        m_desiredState == DesiredState.groundIntake && m_measuredState == MeasuredState.atSetPoint);
+    Logger.recordOutput("SimIntaking", RobotState.isSimIntaking());
+    Logger.recordOutput("HasCoral", RobotState.isHasCoral());
 
-        double pivotPercentError = 
-            100.0 * 
-                (getPosFromState().pivot().minus(m_pivotInputs.position).abs(Degrees) 
-                    / m_pivotInputs.position.in(Degrees));
-        
-        double elevatorPercentError = 
-            100.0 * 
-                (Rotations.of(getPosFromState().elevator().in(Meters) / Constants.Superstructure.ElevatorMetersToRotations).minus(m_elevatorInputs.position).abs(Degrees) 
-                    / m_elevatorInputs.position.in(Degrees));
+    Logger.recordOutput("Superstructure/d-roller", volts.toString());
 
-        double wristPercentError = 
-            100.0 * 
-                (getPosFromState().wrist().minus(m_wristInputs.position).abs(Degrees) 
-                    / m_wristInputs.position.in(Degrees));
-        
-        // Check if they're under tolerance
-        return pivotPercentError < 5.0 &&
-            elevatorPercentError < 5.0 &&
-            wristPercentError < 5.0;
-    }
+    m_pivotLeader.setPosition(pos.pivot());
+    m_elevator.setPosition(
+        Rotations.of(
+            pos.elevator().in(Meters) * Constants.Superstructure.ElevatorMetersToRotations));
+    m_wrist.setPosition(pos.wrist());
 
-    public Rotation2d getEffectorRotation() {
+    m_rollerLeader.setVoltage(volts);
 
-        if (m_desiredState == DesiredState.L1F &&
-            m_desiredState == DesiredState.L2F &&
-            m_desiredState == DesiredState.L3F &&
-            m_desiredState == DesiredState.L4F &&
-            m_desiredState == DesiredState.groundIntake) {
+    visualize();
+    ReefscapeScoring.getInstance().setHeldCoral(getCoral());
+  }
 
-            return Rotation2d.kZero;
+  public ArmPosition getPosFromState() {
 
-        } else if (m_desiredState == DesiredState.L2B &&
-                   m_desiredState == DesiredState.L3B &&
-                   m_desiredState == DesiredState.L4B) {
-            
-            return Rotation2d.k180deg;
-        } else {
-            
-            return Rotation2d.kZero;
-        }
-    }
+    return switch (m_desiredState) {
+      case startPos -> Constants.Superstructure.Starting;
+      case home -> Constants.Superstructure.Home;
+      case groundIntake -> Constants.Superstructure.GroundIntake;
+      case L1F -> Constants.Superstructure.L1F;
+      case L2F -> Constants.Superstructure.L2F;
+      case L3F -> Constants.Superstructure.L3F;
+      case L4F -> Constants.Superstructure.L4F;
+      case L2B -> Constants.Superstructure.L2B;
+      case L3B -> Constants.Superstructure.L3B;
+      case L4B -> Constants.Superstructure.L4B;
+      default -> Constants.Superstructure.Home;
+    };
+  }
 
-    public boolean isBackwardsToScore() {
+  public boolean isAtSetpoint() {
 
-        var translation = RobotState.getPoseEst().toPose2d().getTranslation();
+    double pivotErrorDeg = getPosFromState().pivot().minus(m_pivotInputs.position).abs(Degrees);
 
-        var hub = Alliance.flipOnRed(new Pose2d(Constants.Field.BlueHub, Rotation2d.kZero)).getTranslation();
+    double elevatorActualMeters =
+        m_elevatorInputs.position.in(Rotations)
+            / Constants.Superstructure.ElevatorMetersToRotations;
+    double elevatorErrorMeters =
+        Math.abs(getPosFromState().elevator().in(Meters) - elevatorActualMeters);
 
-        var angle = translation.minus(hub).getAngle();
+    double wristErrorDeg = getPosFromState().wrist().minus(m_wristInputs.position).abs(Degrees);
 
-        return Math.abs(angle.getRadians()) > Math.PI;
-    }
+    // Check if they're under absolute tolerance
+    return pivotErrorDeg < 3.0 && elevatorErrorMeters < 0.03 && wristErrorDeg < 3.0;
+  }
 
-    public Optional<Pose2d> getDrivePointToScore(boolean isRightSide) {
+  public boolean isBackwardsToScore() {
 
-        List<Pose2d> poses = RobotState.getLastSeenTags()
-            .stream()
-            .map((tagID) -> {
+    var pose = RobotState.getPoseEst().toPose2d();
 
-                if (tagID >= 1 && tagID <= 22) {
-                    Pose2d tagPose = PoseCameraIO.getTagPose(tagID).toPose2d();
+    var hub =
+        Alliance.flipOnRed(new Pose2d(Constants.Field.BlueHub, Rotation2d.kZero)).getTranslation();
 
-                    Distance yOffset = Constants.Superstructure.CoralScoreYOffset;
-                    if (isRightSide) {
-                        yOffset = yOffset.times(-1);
-                    }
-                    Translation2d offsetFromTag = new Translation2d(Constants.Superstructure.CoralScoreXOffset, yOffset);
+    var angle = pose.getRotation().minus(pose.getTranslation().minus(hub).getAngle());
 
-                    var transformedPose =
-                            tagPose.plus(new Transform2d(offsetFromTag.getX(), offsetFromTag.getY(), Rotation2d.kZero));
+    return Math.abs(angle.getDegrees()) < 90;
+  }
 
-                    return new Pose2d(
+  public Rotation2d getEffectorRotation() {
+
+    return isBackwardsToScore() ? Rotation2d.kZero : Rotation2d.k180deg;
+  }
+
+  public Optional<Pose2d> getDrivePointToScore(boolean isRightSide) {
+
+    List<Pose2d> poses =
+        List.of(IntStream.range(6, 12), IntStream.range(17, 23)).stream()
+            .map(IntStream::boxed)
+            .flatMap(
+                (reef) -> {
+                  return reef.map(
+                      (tagID) -> {
+                        Pose2d tagPose = PoseCameraIO.getTagPose(tagID).toPose2d();
+
+                        Distance yOffset = Constants.Superstructure.CoralScoreYOffset;
+                        if (isRightSide) {
+                          yOffset = yOffset.times(-1);
+                        }
+                        Translation2d offsetFromTag =
+                            new Translation2d(Constants.Superstructure.CoralScoreXOffset, yOffset);
+
+                        var transformedPose =
+                            tagPose.plus(
+                                new Transform2d(
+                                    offsetFromTag.getX(), offsetFromTag.getY(), Rotation2d.kZero));
+
+                        return new Pose2d(
                             transformedPose.getTranslation(),
-                            transformedPose.getRotation().plus(isBackwardsToScore() ? Rotation2d.k180deg : Rotation2d.kZero));
-                } else {
-                    return Pose2d.kZero;
-                }
-            })
-            .filter((pose) -> ! pose.equals(Pose2d.kZero))
+                            transformedPose.getRotation().plus(getEffectorRotation()));
+                      });
+                })
             .toList();
-        
-        if (poses.isEmpty())
-            return Optional.empty();
-        else
-            return Optional.of(RobotState.getPoseEst().toPose2d().nearest(poses));
-    }
 
-    public void resetAtStarting() {
+    if (poses.isEmpty()) return Optional.empty();
+    else return Optional.of(RobotState.getPoseEst().toPose2d().nearest(poses));
+  }
 
-        m_pivotLeader.resetEncoder(Constants.Superstructure.Starting.pivot());
-        m_elevator.resetEncoder(Rotations.of(Constants.Superstructure.Starting.elevator().in(Meters) * Constants.Superstructure.ElevatorMetersToRotations));
-        m_wrist.resetEncoder(Constants.Superstructure.Starting.pivot());
-    }
+  public void resetAtStarting() {
 
-    public Command resetAtStartingCmd() {
+    m_pivotLeader.resetEncoder(Constants.Superstructure.Starting.pivot());
+    m_elevator.resetEncoder(
+        Rotations.of(
+            Constants.Superstructure.Starting.elevator().in(Meters)
+                * Constants.Superstructure.ElevatorMetersToRotations));
+    m_wrist.resetEncoder(Constants.Superstructure.Starting.pivot());
+  }
 
-        return runOnce(this::resetAtStarting);
-    }
+  public Command resetAtStartingCmd() {
 
-    public Command coralIntake() {
+    return runOnce(this::resetAtStarting);
+  }
 
-        return runOnce(() -> setState(DesiredState.groundIntake.with(RollerState.intakingCoral)))
+  public Command coralIntake() {
+
+    return runOnce(() -> setState(DesiredState.groundIntake.with(RollerState.intakingCoral)))
         .andThen(new WaitUntilCommand(m_sensor::isDetected))
         .andThen(() -> setState(DesiredState.groundIntake.with(RollerState.holdingCoral)));
-    }
-    
-    public Command score() {
+  }
 
-        return defer(() -> {
-            if (m_desiredState != DesiredState.groundIntake &&
-                m_desiredState != DesiredState.groundIntake &&
-                m_desiredState != DesiredState.groundIntake &&
-                m_sensor.isDetected()) {
+  public Command score() {
 
-                return run(() -> setState(m_desiredState.with(RollerState.scoringCoral)))
-                    .until(() -> !m_sensor.isDetected())
-                    .withTimeout(1.0)
-                    .andThen(() -> setState(m_desiredState.with(RollerState.idle)));
-            } else {
-                return Commands.none();
-            }
+    // Timer to do the pose interpolation btwn the end effector and the reef
+    Timer scoreTimer = new Timer();
+
+    return defer(
+        () -> {
+          if (getCoral().isEmpty()) return Commands.none();
+          Pose3d fieldStartPos = getCoral().get();
+          Pose3d fieldEndPos =
+              fieldStartPos.nearest(
+                  ReefscapeScoring.getInstance().getScoringLocations().entrySet().stream()
+                      .filter(loc -> !loc.getValue())
+                      .map(loc -> loc.getKey())
+                      .toList());
+
+          scoreTimer.restart();
+          scoreTimer.start();
+
+          return Commands.race(
+                  defer(
+                      () -> {
+                        if (m_desiredState != DesiredState.groundIntake
+                            && m_desiredState != DesiredState.groundIntake
+                            && m_desiredState != DesiredState.groundIntake
+                            && m_sensor.isDetected()
+                            && m_measuredState == MeasuredState.atSetPoint) {
+
+                          return run(() -> setState(m_desiredState.with(RollerState.scoringCoral)))
+                              .until(() -> !m_sensor.isDetected())
+                              .withTimeout(1.0)
+                              .andThen(() -> setState(m_desiredState.with(RollerState.idle)));
+                        } else {
+                          return Commands.none();
+                        }
+                      }),
+                  runOnce(() -> RobotState.setHasCoral(false)).asProxy(),
+                  run(() ->
+                          ReefscapeScoring.getInstance()
+                              .setHeldCoral(
+                                  Optional.of(
+                                      fieldStartPos.interpolate(
+                                          fieldEndPos, scoreTimer.get() / 2.0))))
+                      .andThen(
+                          Commands.runOnce(
+                              () ->
+                                  ReefscapeScoring.getInstance()
+                                      .getScoringLocations()
+                                      .put(fieldEndPos, true)))
+                      .alongWith(new WaitCommand(2.0))
+                      .asProxy())
+              .asProxy();
         });
-    }
+  }
 
-    public Command home() {
+  public Command home() {
 
-        return runOnce(() -> setState(DesiredState.home.with(RollerState.idle)));
-    }
+    return runOnce(() -> setState(DesiredState.home.with(RollerState.idle)));
+  }
 
-    public Command L1() {
+  public Command L1() {
 
-        return runOnce(() -> setState(DesiredState.L1F.with(RollerState.idle)));
-    }
+    return runOnce(() -> setState(DesiredState.L1F.with(RollerState.idle)));
+  }
 
-    public Command L2() {
+  public Command L2() {
 
-        return defer(() -> {
-            if (isBackwardsToScore())
-                return runOnce(() -> setState(DesiredState.L2F.with(RollerState.idle)));
-            else
-                return runOnce(() -> setState(DesiredState.L2B.with(RollerState.idle)));
+    return defer(
+        () -> {
+          if (isBackwardsToScore())
+            return runOnce(() -> setState(DesiredState.L2F.with(RollerState.idle)));
+          else return runOnce(() -> setState(DesiredState.L2B.with(RollerState.idle)));
         });
-    }
+  }
 
-    public Command L3() {
+  public Command L3() {
 
-        return defer(() -> {
-            if (isBackwardsToScore())
-                return runOnce(() -> setState(DesiredState.L3F.with(RollerState.idle)));
-            else
-                return runOnce(() -> setState(DesiredState.L3B.with(RollerState.idle)));
+    return defer(
+        () -> {
+          if (isBackwardsToScore())
+            return runOnce(() -> setState(DesiredState.L3F.with(RollerState.idle)));
+          else return runOnce(() -> setState(DesiredState.L3B.with(RollerState.idle)));
         });
-    }
+  }
 
-    public Command L4() {
+  public Command L4() {
 
-        return defer(() -> {
-            if (isBackwardsToScore())
-                return runOnce(() -> setState(DesiredState.L4F.with(RollerState.idle)));
-            else
-                return runOnce(() -> setState(DesiredState.L4B.with(RollerState.idle)));
+    return defer(
+        () -> {
+          if (isBackwardsToScore())
+            return runOnce(() -> setState(DesiredState.L4F.with(RollerState.idle)));
+          else return runOnce(() -> setState(DesiredState.L4B.with(RollerState.idle)));
         });
-    }
+  }
+
+  public void visualize() {
+
+    Pose3d pivotPos =
+        new Pose3d(
+            Inches.of(1.25),
+            Inches.of(0),
+            Inches.of(-1.0),
+            new Rotation3d(Degrees.of(0), Degrees.of(4.914357), Degrees.of(180.0)));
+
+    pivotPos =
+        pivotPos.rotateAround(
+            new Translation3d(Inches.of(11.0), Inches.of(0.0), Inches.of(13.0)),
+            new Rotation3d(
+                Degrees.of(0), m_pivotInputs.position.minus(Degrees.of(90)), Degrees.of(0)));
+
+    var elevatorDistance =
+        Meters.of(
+            m_elevatorInputs.position.in(Rotations)
+                / Constants.Superstructure.ElevatorMetersToRotations);
+
+    Pose3d elevator1Pos =
+        new Pose3d(
+            Inches.of(1.25),
+            Inches.of(0),
+            elevatorDistance.div(2.0).plus(Inches.of(-18.3)),
+            new Rotation3d(Degrees.of(0), Degrees.of(4.914357), Degrees.of(180.0)));
+
+    elevator1Pos =
+        elevator1Pos.rotateAround(
+            new Translation3d(Inches.of(11.0), Inches.of(0.0), Inches.of(13.05)),
+            new Rotation3d(
+                Degrees.of(0), m_pivotInputs.position.minus(Degrees.of(90)), Degrees.of(0)));
+
+    Pose3d elevator2Pos =
+        new Pose3d(
+            Inches.of(1.25),
+            Inches.of(0),
+            elevatorDistance.plus(Inches.of(-35.5)),
+            new Rotation3d(Degrees.of(0), Degrees.of(4.914357), Degrees.of(180.0)));
+
+    elevator2Pos =
+        elevator2Pos.rotateAround(
+            new Translation3d(Inches.of(11.0), Inches.of(0.0), Inches.of(13.05)),
+            new Rotation3d(
+                Degrees.of(0), m_pivotInputs.position.minus(Degrees.of(90)), Degrees.of(0)));
+
+    Pose3d wristPos =
+        new Pose3d(
+            new Translation3d(Inches.of(11.15), Inches.of(0.0), Inches.of(13.0)), Rotation3d.kZero);
+
+    wristPos =
+        wristPos.plus(
+            new Transform3d(
+                new Translation3d(
+                        elevatorDistance.plus(Inches.of(28.0)), Inches.of(0.0), Inches.of(5.0))
+                    .rotateBy(
+                        new Rotation3d(
+                            Degrees.of(0),
+                            m_pivotInputs.position.plus(Degrees.of(180)),
+                            Degrees.of(0))),
+                new Rotation3d(
+                    Degrees.of(180),
+                    m_wristInputs.position.times(-1).plus(m_pivotInputs.position),
+                    Degrees.of(0))));
+
+    Logger.recordOutput("viz/pivot", pivotPos);
+    Logger.recordOutput("viz/elevator1", elevator1Pos);
+    Logger.recordOutput("viz/elevator2", elevator2Pos);
+    Logger.recordOutput("viz/wrist", wristPos);
+  }
+
+  public Optional<Pose3d> getCoral() {
+    if (!m_sensor.isDetected()) return Optional.empty();
+
+    var elevatorDistance =
+        Meters.of(
+            m_elevatorInputs.position.in(Rotations)
+                / Constants.Superstructure.ElevatorMetersToRotations);
+
+    // Start with the robot pos
+    Pose3d wristPos = RobotState.getPoseEst();
+
+    // Go to the pivot
+    wristPos =
+        wristPos.plus(
+            new Transform3d(
+                new Translation3d(Inches.of(11.15), Inches.of(0.0), Inches.of(13.0)),
+                Rotation3d.kZero));
+
+    // Go to the wrist from the pivot base
+    wristPos =
+        wristPos.plus(
+            new Transform3d(
+                new Translation3d(
+                        elevatorDistance.plus(Inches.of(28.0)), Inches.of(0.0), Inches.of(5.0))
+                    .rotateBy(
+                        new Rotation3d(
+                            Degrees.of(0),
+                            m_pivotInputs.position.plus(Degrees.of(180)),
+                            Degrees.of(0))),
+                new Rotation3d(
+                    Degrees.of(180),
+                    m_wristInputs.position.times(-1).plus(m_pivotInputs.position),
+                    Degrees.of(0))));
+
+    return Optional.of(wristPos);
+  }
 }

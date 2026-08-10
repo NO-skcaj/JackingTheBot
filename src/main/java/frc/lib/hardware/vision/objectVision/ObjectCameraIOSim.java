@@ -18,10 +18,10 @@ import frc.lib.hardware.vision.VisionConfig;
 import frc.lib.hardware.vision.objectVision.ObjectVision.ObjectTargetData;
 import frc.o2026.RobotState;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.ironmaple.simulation.gamepieces.GamePieceOnFieldSimulation;
 
 public class ObjectCameraIOSim implements ObjectCameraIO {
 
@@ -41,7 +41,9 @@ public class ObjectCameraIOSim implements ObjectCameraIO {
   public Set<ObjectTargetData> getObjects() {
     Pose3d robotPose = RobotState.getSimRealPose();
 
-    return List.of(new Translation3d(1, 1, 0)).stream()
+    return RobotState.getSimArena().gamePiecesOnField().stream()
+        .map(GamePieceOnFieldSimulation::getPose3d)
+        .map(Pose3d::getTranslation)
         .filter(
             translation ->
                 robotPose.getTranslation().getDistance(translation) < SeeableDist.in(Meters))

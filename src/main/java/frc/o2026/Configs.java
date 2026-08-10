@@ -10,7 +10,6 @@ import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.FeetPerSecond;
 import static edu.wpi.first.units.Units.FeetPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Inches;
-import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecondPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
@@ -45,48 +44,81 @@ public class Configs {
 
   public static final class Superstructure {
 
-    public static final TOFConfig CoralSensorConfig = 
-      new TOFConfig()
-        .withMinDistance(Inches.of(1.0))
-        .withMinSignalStrength(2000.0);
+    public static final TOFConfig CoralSensorConfig =
+        new TOFConfig().withMinDistance(Inches.of(1.0)).withMinSignalStrength(2000.0);
 
-    public static final int PivotGearRatio = (60 / 10) * (50 / 50) * (48 / 12);
+    public static final double PivotGearRatio = (60.0 / 10.0) * (50.0 / 50.0) * (48.0 / 12.0);
 
     public static final MotorConfig PivotConfig =
         new MotorConfig()
             .withSupplyCurrent(Amps.of(60.0))
             .withStatorCurrent(Amps.of(160.0))
-            .withBrakeMode(false)
+            .withBrakeMode(true)
             .withInverted(false)
             .withContinuousWrap(false)
-            .withP(6)
-            .withI(0.03)
-            .withD(0.1)
-            .withVelocityLimit(RotationsPerSecond.of(10))
-            .withAccelerationLimit(RotationsPerSecondPerSecond.of(10))
-            .withSensorToMechanismRatio(0);
-    
-    public static final int ElevatorGearRatio = (64 / 18);
+            .withP(10.0)
+            .withI(0.0)
+            .withD(0.5)
+            .withV(2.88)
+            .withVelocityLimit(RotationsPerSecond.of(0.25))
+            .withAccelerationLimit(RotationsPerSecondPerSecond.of(1))
+            .withSensorToMechanismRatio(PivotGearRatio);
+
+    public static final double ElevatorGearRatio = 3.0 * (64.0 / 18.0);
 
     public static final MotorConfig ElevatorConfig =
         new MotorConfig()
             .withSupplyCurrent(Amps.of(60.0))
             .withStatorCurrent(Amps.of(160.0))
+            .withBrakeMode(true)
+            .withInverted(false)
+            .withContinuousWrap(false)
+            .withP(10.0)
+            .withI(0.0)
+            .withD(0.5)
+            .withV(5.12)
+            .withVelocityLimit(RotationsPerSecond.of(10))
+            .withAccelerationLimit(RotationsPerSecondPerSecond.of(10))
+            .withSensorToMechanismRatio(ElevatorGearRatio);
+
+    public static final double WristGearRatio = (48.0 / 8.0);
+
+    public static final MotorConfig WristConfig =
+        new MotorConfig()
+            .withSupplyCurrent(Amps.of(60.0))
+            .withStatorCurrent(Amps.of(160.0))
+            .withBrakeMode(true)
+            .withInverted(false)
+            .withContinuousWrap(false)
+            .withP(25.0)
+            .withI(0.0)
+            .withD(0.5)
+            .withV(0.72)
+            .withVelocityLimit(RotationsPerSecond.of(10))
+            .withAccelerationLimit(RotationsPerSecondPerSecond.of(10))
+            .withSensorToMechanismRatio(WristGearRatio);
+
+    public static final double RollerGearRatio = (48.0 / 8.0);
+
+    public static final MotorConfig RollerConfig =
+        new MotorConfig()
+            .withSupplyCurrent(Amps.of(40.0))
+            .withStatorCurrent(Amps.of(80.0))
             .withBrakeMode(false)
             .withInverted(false)
             .withContinuousWrap(false)
             .withP(5)
-            .withI(0.0)
-            .withD(0.3)
+            .withI(0.03)
+            .withD(0.1)
             .withVelocityLimit(RotationsPerSecond.of(10))
             .withAccelerationLimit(RotationsPerSecondPerSecond.of(10))
-            .withSensorToMechanismRatio(0);
+            .withSensorToMechanismRatio(RollerGearRatio);
   }
 
   public static final class Chassis {
 
-    public static final double AssistPower = 0.9;
-    public static final LinearVelocity IntakeSpeed = MetersPerSecond.of(0.2);
+    public static final double IntakeAssistRotationPower = 0.9;
+    public static final LinearVelocity IntakeAssistSpeed = FeetPerSecond.of(0.8);
 
     public static final Distance CenterDistToReef = Inches.of(22.5);
 

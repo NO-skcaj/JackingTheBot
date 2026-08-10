@@ -9,30 +9,29 @@ package frc.o2026;
 import com.pathplanner.lib.auto.AutoBuilder;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.SlewRateLimiter;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import frc.lib.GuitarController;
-import frc.lib.Util;
-import frc.lib.NONBenevolentSalesman;
 import frc.lib.hardware.TOF.TOFIOCANRange;
+import frc.lib.hardware.TOF.TOFIOSim;
 import frc.lib.hardware.gyro.GyroIOPigeon;
+import frc.lib.hardware.motor.MotorIONothing;
+import frc.lib.hardware.motor.ctre.MotorIOSim;
+import frc.lib.hardware.motor.ctre.MotorIOTalonFX;
 import frc.lib.hardware.vision.objectVision.ObjectCameraIOPhoton;
 import frc.lib.hardware.vision.objectVision.ObjectCameraIOSim;
 import frc.lib.hardware.vision.poseVision.PoseCameraIOLimelight;
 import frc.lib.hardware.vision.poseVision.PoseCameraIOPhoton;
 import frc.lib.hardware.vision.poseVision.PoseCameraIOSim;
 import frc.o2026.subsystems.drivebase.Swerve;
+import frc.o2026.subsystems.drivebase.Swerve.DesiredState;
 import frc.o2026.subsystems.drivebase.SwerveIOReal;
 import frc.o2026.subsystems.drivebase.SwerveIOSim;
-import frc.o2026.subsystems.drivebase.Swerve.DesiredState;
 import frc.o2026.subsystems.superstructure.Superstucture;
 
 public class RobotContainer extends SubsystemBase {
@@ -46,14 +45,14 @@ public class RobotContainer extends SubsystemBase {
     Sim
   }
 
-  private static Robot m_impl = Robot.DevBot;
+  private static Robot m_impl = Robot.Sim;
 
   private CommandXboxController m_driver = new CommandXboxController(Constants.Usb.DrivePort);
   //   private CommandXboxController m_operator = new
   // CommandXboxController(Constants.Usb.OperatorPort);
-  private GuitarController m_guitar = new GuitarController(Constants.Usb.GuitarPort);
-  private NONBenevolentSalesman m_creditOrDebit =
-      new NONBenevolentSalesman(Constants.Usb.CreditPort);
+  //   private GuitarController m_guitar = new GuitarController(Constants.Usb.GuitarPort);
+  //   private NONBenevolentSalesman m_creditOrDebit =
+  //       new NONBenevolentSalesman(Constants.Usb.CreditPort);
 
   private SlewRateLimiter m_xLimiter = new SlewRateLimiter(2.0);
   private SlewRateLimiter m_yLimiter = new SlewRateLimiter(2.0);
@@ -81,12 +80,31 @@ public class RobotContainer extends SubsystemBase {
                     new PoseCameraIOLimelight(Constants.Vision.LimelightOfDoomAndDespair)),
                 new ObjectCameraIOPhoton(Constants.Vision.BackCamConfig));
 
-        m_superstructure = new Superstucture(
-          null, null, null, null,
-           null, 
-           null, 
-           null, null, 
-           new TOFIOCANRange(0, Configs.Superstructure.CoralSensorConfig));
+        m_superstructure =
+            new Superstucture(
+                // PIVOT
+                new MotorIOTalonFX(
+                    Constants.CanIds.PivotLeaderMotorId, Configs.Superstructure.PivotConfig),
+                new MotorIOTalonFX(
+                    Constants.CanIds.PivotLeftFollowerMotorId, Configs.Superstructure.PivotConfig),
+                new MotorIOTalonFX(
+                    Constants.CanIds.PivotRight1MotorId, Configs.Superstructure.PivotConfig),
+                new MotorIOTalonFX(
+                    Constants.CanIds.PivotRight2MotorId, Configs.Superstructure.PivotConfig),
+                // ELEVATOR
+                new MotorIOTalonFX(
+                    Constants.CanIds.ElevatorMotorId, Configs.Superstructure.ElevatorConfig),
+                // WRIST
+                new MotorIOTalonFX(
+                    Constants.CanIds.WristMotorId, Configs.Superstructure.WristConfig),
+                // ROLLERS
+                new MotorIOTalonFX(
+                    Constants.CanIds.RollerLeaderMotorId, Configs.Superstructure.RollerConfig),
+                new MotorIOTalonFX(
+                    Constants.CanIds.RollerFollowerMotorId, Configs.Superstructure.RollerConfig),
+                // SENSOR
+                new TOFIOCANRange(
+                    Constants.CanIds.HoldSensorId, Configs.Superstructure.CoralSensorConfig));
 
         break;
 
@@ -106,6 +124,18 @@ public class RobotContainer extends SubsystemBase {
                 RobotBase.isReal()
                     ? new ObjectCameraIOPhoton(Constants.Vision.BackCamConfig)
                     : new ObjectCameraIOSim(Constants.Vision.BackCamConfig));
+
+        m_superstructure =
+            new Superstucture(
+                new MotorIONothing(),
+                new MotorIONothing(),
+                new MotorIONothing(),
+                new MotorIONothing(),
+                new MotorIONothing(),
+                new MotorIONothing(),
+                new MotorIONothing(),
+                new MotorIONothing(),
+                new TOFIOSim(RobotState::isHasCoral));
         break;
 
       case Sim:
@@ -116,6 +146,51 @@ public class RobotContainer extends SubsystemBase {
                     new PoseCameraIOSim(Constants.Vision.WebCam),
                     new PoseCameraIOSim(Constants.Vision.LimelightOfDoomAndDespair)),
                 new ObjectCameraIOSim(Constants.Vision.BackCamConfig));
+
+        m_superstructure =
+            new Superstucture(
+                // PIVOT
+                new MotorIOSim(
+                    Constants.CanIds.PivotLeaderMotorId,
+                    Configs.Superstructure.PivotConfig,
+                    true,
+                    DCMotor.getKrakenX60(4),
+                    0.1,
+                    Configs.Superstructure.PivotGearRatio),
+                new MotorIONothing(),
+                new MotorIONothing(),
+                new MotorIONothing(),
+
+                // ELEVATOR
+                new MotorIOSim(
+                    Constants.CanIds.ElevatorMotorId,
+                    Configs.Superstructure.ElevatorConfig,
+                    true,
+                    DCMotor.getKrakenX60(1),
+                    0.06,
+                    Configs.Superstructure.ElevatorGearRatio),
+
+                // WRIST
+                new MotorIOSim(
+                    Constants.CanIds.WristMotorId,
+                    Configs.Superstructure.WristConfig,
+                    false,
+                    DCMotor.getKrakenX44(1),
+                    0.01,
+                    Configs.Superstructure.WristGearRatio),
+
+                // ROLLERS
+                new MotorIOSim(
+                    Constants.CanIds.RollerLeaderMotorId,
+                    Configs.Superstructure.RollerConfig,
+                    false,
+                    DCMotor.getKrakenX44(1),
+                    0.007,
+                    Configs.Superstructure.RollerGearRatio),
+                new MotorIONothing(),
+                // SENSOR
+                new TOFIOSim(RobotState::isHasCoral));
+
         break;
     }
 
@@ -126,47 +201,150 @@ public class RobotContainer extends SubsystemBase {
 
     // DEFAULT COMMANDS
 
-    m_swerve.setDefaultCommand(m_swerve.runOnce(() -> m_swerve.setState( Swerve.DesiredState.driveDefault.with(getSpeeds()))));
+    m_swerve.setDefaultCommand(
+        m_swerve
+            .run(() -> m_swerve.setState(Swerve.DesiredState.driveDefault.with(getSpeeds())))
+            .repeatedly());
 
     // CONTROLLER BINDINGS
 
-    m_driver.rightStick().onTrue(m_swerve.resetGyro());
-    m_driver.leftStick().onTrue(m_swerve.toggleFieldCentricity());
+    m_driver.rightStick().onTrue(m_swerve.resetGyro().asProxy());
+    m_driver.leftStick().onTrue(m_swerve.toggleFieldCentricity().asProxy());
 
+    m_driver.y().onTrue(m_superstructure.L4());
 
+    m_driver.x().onTrue(m_superstructure.L3());
 
-    Util.sendLambda("yUp",    () -> m_swerve.setState(
-      DesiredState.driveRobot.with(new ChassisSpeeds(-0.5, 0.0, 0.0))));
-    Util.sendLambda("yDown",  () -> m_swerve.setState(
-      DesiredState.driveRobot.with(new ChassisSpeeds(0.5, 0.0, 0.0))));
-    Util.sendLambda("xLeft",  () -> m_swerve.setState(
-      DesiredState.driveRobot.with(new ChassisSpeeds(0.0, -0.5, 0.0))));
-    Util.sendLambda("xRight", () -> m_swerve.setState(
-      DesiredState.driveRobot.with(new ChassisSpeeds(0.0, 0.5, 0.0))));
+    m_driver.b().onTrue(m_superstructure.L2());
 
-    Util.sendLambda("rotLeft",  () -> m_swerve.setState(
-      DesiredState.driveRobot.with(new ChassisSpeeds(0.0, 0.0, Math.PI / 2))));
-    Util.sendLambda("rotRight", () -> m_swerve.setState(
-      DesiredState.driveRobot.with(new ChassisSpeeds(0.0, 0.0, -Math.PI / 2))));
+    m_driver.a().onTrue(m_superstructure.L1());
 
-    m_guitar.A().onTrue(Util.lambdaAsCommand(() -> m_swerve.setState(
-      DesiredState.driveRobot.with(new ChassisSpeeds(-0.5, 0.0, 0.0)))));
-    m_guitar.D().onTrue(Util.lambdaAsCommand(() -> m_swerve.setState(
-      DesiredState.driveRobot.with(new ChassisSpeeds(0.5, 0.0, 0.0)))));
-    m_guitar.G().onTrue(Util.lambdaAsCommand(() -> m_swerve.setState(
-      DesiredState.driveRobot.with(new ChassisSpeeds(0.0, -0.5, 0.0)))));
-    m_guitar.B().onTrue(Util.lambdaAsCommand(() -> m_swerve.setState(
-      DesiredState.driveRobot.with(new ChassisSpeeds(0.0, 0.5, 0.0)))));
+    m_driver
+        .leftTrigger()
+        .and(m_swerve::hasObjects)
+        .whileTrue(
+            m_swerve
+                .runOnce(
+                    () -> m_swerve.setState(Swerve.DesiredState.intakeAssist.with(getSpeeds())))
+                .repeatedly())
+        .onFalse(
+            m_swerve.run(
+                () -> m_swerve.setState(Swerve.DesiredState.driveDefault.with(getSpeeds()))));
 
-    m_creditOrDebit
-        .swipe()
-        .onTrue(
+    m_driver
+        .leftTrigger()
+        .whileTrue(m_superstructure.coralIntake())
+        .onFalse(m_superstructure.home());
+
+    m_driver
+        .rightBumper()
+        .whileTrue(
+            m_swerve
+                .defer(
+                    () -> {
+                      var pointOpt = m_superstructure.getDrivePointToScore(true);
+                      if (pointOpt.isPresent()) return m_swerve.bLinePathPose(pointOpt.get());
+                      else return idle().asProxy();
+                    })
+                .repeatedly()
+                .until(m_swerve::isAtPidPose)
+                .andThen(m_superstructure.score().withName("SCOREEEE"))
+                .withName("SCOREE"))
+        .onFalse(
+            m_swerve.run(
+                () -> m_swerve.setState(Swerve.DesiredState.driveDefault.with(getSpeeds()))));
+
+    m_driver
+        .leftBumper()
+        .whileTrue(
             m_swerve.defer(
                 () -> {
-                  return Commands.race(
-                      Util.lambdaAsCommand(() -> m_swerve.setState(Swerve.DesiredState.aim.with(m_swerve.getHeading().plus(Rotation2d.k180deg)))),
-                      new WaitCommand(10));
-                }));
+                  var pointOpt = m_superstructure.getDrivePointToScore(false);
+                  if (pointOpt.isPresent()) {
+                    return m_swerve
+                        .run(() -> m_swerve.setState(DesiredState.pidPose.with(pointOpt.get())))
+                        .repeatedly()
+                        .until(m_swerve::isAtPidPose)
+                        .andThen(
+                            m_superstructure
+                                .score()
+                                .alongWith(
+                                    m_swerve.run(
+                                        () ->
+                                            m_swerve.setState(
+                                                DesiredState.pidPose.with(pointOpt.get())))));
+                  } else {
+                    return idle().asProxy();
+                  }
+                }))
+        .onFalse(
+            m_swerve.run(
+                () -> m_swerve.setState(Swerve.DesiredState.driveDefault.with(getSpeeds()))));
+
+    // Util.sendLambda(
+    //     "yUp",
+    //     () -> m_swerve.setState(DesiredState.driveRobot.with(new ChassisSpeeds(-0.5, 0.0,
+    // 0.0))));
+    // Util.sendLambda(
+    //     "yDown",
+    //     () -> m_swerve.setState(DesiredState.driveRobot.with(new ChassisSpeeds(0.5, 0.0, 0.0))));
+    // Util.sendLambda(
+    //     "xLeft",
+    //     () -> m_swerve.setState(DesiredState.driveRobot.with(new ChassisSpeeds(0.0, -0.5,
+    // 0.0))));
+    // Util.sendLambda(
+    //     "xRight",
+    //     () -> m_swerve.setState(DesiredState.driveRobot.with(new ChassisSpeeds(0.0, 0.5, 0.0))));
+
+    // Util.sendLambda(
+    //     "rotLeft",
+    //     () ->
+    //         m_swerve.setState(
+    //             DesiredState.driveRobot.with(new ChassisSpeeds(0.0, 0.0, Math.PI / 2))));
+    // Util.sendLambda(
+    //     "rotRight",
+    //     () ->
+    //         m_swerve.setState(
+    //             DesiredState.driveRobot.with(new ChassisSpeeds(0.0, 0.0, -Math.PI / 2))));
+
+    // m_guitar.A()
+    //     .onTrue(
+    //         Util.lambdaAsCommand(
+    //             () ->
+    //                 m_swerve.setState(
+    //                     DesiredState.driveRobot.with(new ChassisSpeeds(-0.5, 0.0, 0.0)))));
+    // m_guitar.D()
+    //     .onTrue(
+    //         Util.lambdaAsCommand(
+    //             () ->
+    //                 m_swerve.setState(
+    //                     DesiredState.driveRobot.with(new ChassisSpeeds(0.5, 0.0, 0.0)))));
+    // m_guitar.G()
+    //     .onTrue(
+    //         Util.lambdaAsCommand(
+    //             () ->
+    //                 m_swerve.setState(
+    //                     DesiredState.driveRobot.with(new ChassisSpeeds(0.0, -0.5, 0.0)))));
+    // m_guitar.B()
+    //     .onTrue(
+    //         Util.lambdaAsCommand(
+    //             () ->d
+    //                 m_swerve.setState(
+    //                     DesiredState.driveRobot.with(new ChassisSpeeds(0.0, 0.5, 0.0)))));
+
+    // m_creditOrDebit
+    //     .swipe()
+    //     .onTrue(
+    //         m_swerve.defer(
+    //             () -> {
+    //               return Commands.race(
+    //                   Util.lambdaAsCommand(
+    //                       () ->
+    //                           m_swerve.setState(
+    //                               Swerve.DesiredState.aim.with(
+    //                                   m_swerve.getHeading().plus(Rotation2d.k180deg)))),
+    //                   new WaitCommand(10));
+    //             }));
 
     // PATHING COMMANDS & TRIGGERS
 

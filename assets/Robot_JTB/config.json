@@ -1,0 +1,29 @@
+{
+ "name": "JTB",
+ "rotations": [
+  {
+   "axis": "z",
+   "degrees": 180
+  }
+ ],
+ "position": [],
+ "cameras": [],
+ "components": [
+  {
+   "zeroedRotations": [],
+   "zeroedPosition": []
+  },
+  {
+   "zeroedRotations": [],
+   "zeroedPosition": []
+  },
+  {
+   "zeroedRotations": [],
+   "zeroedPosition": []
+  },
+  {
+   "zeroedRotations": [],
+   "zeroedPosition": []
+  }
+ ]
+}
