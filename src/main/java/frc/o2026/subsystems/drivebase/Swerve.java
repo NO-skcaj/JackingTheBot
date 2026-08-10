@@ -37,12 +37,16 @@ import frc.robot.lib.BLine.FollowPath;
 import frc.robot.lib.BLine.Path;
 import frc.robot.lib.BLine.Path.PathElement;
 import java.util.List;
+import java.util.Optional;
+
 import org.littletonrobotics.junction.Logger;
 
 public class Swerve extends SubsystemBase {
 
   private SwerveIO m_io;
   private ObjectVision m_objectDetection;
+
+  private Optional<Rotation2d> m_odDirection = Optional.empty();
 
   private boolean m_fieldCentricity = true;
 
@@ -200,11 +204,13 @@ public class Swerve extends SubsystemBase {
         break;
 
       case intakeAssist:
-        var optDirection = m_objectDetection.directionToObject();
+        if (m_odDirection.isEmpty())
+          m_odDirection = m_objectDetection.directionToObject();
+
         var assistSpeeds =
             new Translation2d(Configs.Chassis.IntakeAssistSpeed.in(MetersPerSecond), 0.0)
                 .rotateBy(getHeading());
-        if (optDirection.isPresent())
+        if (m_odDirection.isPresent())
           drive(
               new ChassisSpeeds(
                   m_desiredState.speeds.vxMetersPerSecond + assistSpeeds.getX(),
@@ -212,11 +218,11 @@ public class Swerve extends SubsystemBase {
                   m_desiredState.speeds.omegaRadiansPerSecond
                       + m_rotController.calculate(
                               m_io.getGyroHeading().getRadians(),
-                              m_objectDetection
-                                  .directionToObject()
+                              m_odDirection
                                   .get()
-                                  .plus(Rotation2d.k180deg)
-                                  .getRadians())
+                                  .getMeasure()
+                                  .plus(Constants.Vision.FrontCamConfig.offset().getRotation().getMeasureZ())
+                                  .in(Radians))
                           * Configs.Chassis.IntakeAssistRotationPower),
               m_fieldCentricity);
         break;
@@ -228,6 +234,8 @@ public class Swerve extends SubsystemBase {
       default:
         break;
     }
+
+    if (m_desiredState != DesiredState.intakeAssist) m_odDirection = Optional.empty();
 
     RobotState.setLastMeasuredSpeeds(getChassisSpeeds());
     RobotState.setPoseEst(getPose());
