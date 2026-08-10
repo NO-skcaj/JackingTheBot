@@ -1,0 +1,3 @@
+[submodule "src/main/java/frc/shared"]
+	path = src/main/java/frc/shared
+	url = https://github.com/HVA-FRC-3824/hawkLib
