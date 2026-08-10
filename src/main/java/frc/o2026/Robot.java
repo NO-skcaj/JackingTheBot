@@ -11,9 +11,10 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import frc.lib.hardware.SimBattery;
-import frc.lib.hardware.motor.ctre.OrchestraOrchestrator;
-import frc.lib.reefscape.ReefscapeScoring;
+import frc.hawkLib.hardware.SimBattery;
+import frc.hawkLib.hardware.motor.ctre.OrchestraOrchestrator;
+import frc.hawkLib.reefscape.ReefscapeScoring;
+
 import java.util.stream.Stream;
 import org.ironmaple.simulation.gamepieces.GamePieceOnFieldSimulation;
 import org.littletonrobotics.junction.LoggedRobot;

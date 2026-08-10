@@ -27,10 +27,9 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.lib.Alliance;
-import frc.lib.Util;
-import frc.lib.hardware.vision.objectVision.ObjectCameraIO;
-import frc.lib.hardware.vision.objectVision.ObjectVision;
+import frc.hawkLib.Util;
+import frc.hawkLib.hardware.vision.objectVision.ObjectCameraIO;
+import frc.hawkLib.hardware.vision.objectVision.ObjectVision;
 import frc.o2026.Configs;
 import frc.o2026.Constants;
 import frc.o2026.RobotState;
@@ -190,7 +189,7 @@ public class Swerve extends SubsystemBase {
                 m_rotController.calculate(
                     measure.getRotation().getRadians(),
                     m_desiredState.poseTarget.getRotation().getRadians())),
-            true);
+            m_fieldCentricity);
         break;
 
       case aim:

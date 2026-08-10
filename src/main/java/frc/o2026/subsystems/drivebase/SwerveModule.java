@@ -18,10 +18,8 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.lib.hardware.motor.MotorIO;
-import frc.lib.hardware.motor.MotorIO.MotorInputs;
-import frc.lib.hardware.motor.ctre.MotorIOTalonFX;
-import frc.lib.hardware.motor.rev.MotorIOSparkMax;
+import frc.hawkLib.hardware.motor.MotorIO;
+import frc.hawkLib.hardware.motor.MotorIO.MotorInputs;
 import frc.o2026.Configs;
 import frc.o2026.Constants;
 

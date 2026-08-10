@@ -23,22 +23,24 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import frc.lib.hardware.TOF.TOFIOCANRange;
-import frc.lib.hardware.TOF.TOFIOSim;
-import frc.lib.hardware.gyro.GyroIOPigeon;
-import frc.lib.hardware.motor.MotorIONothing;
-import frc.lib.hardware.motor.ctre.MotorIOElevatorSim;
-import frc.lib.hardware.motor.ctre.MotorIOSim;
-import frc.lib.hardware.motor.ctre.MotorIOTalonFX;
-import frc.lib.hardware.vision.objectVision.ObjectCameraIOPhoton;
-import frc.lib.hardware.vision.objectVision.ObjectCameraIOSim;
-import frc.lib.hardware.vision.poseVision.PoseCameraIOLimelight;
-import frc.lib.hardware.vision.poseVision.PoseCameraIOPhoton;
-import frc.lib.hardware.vision.poseVision.PoseCameraIOSim;
+import frc.hawkLib.hardware.TOF.TOFIOCANRange;
+import frc.hawkLib.hardware.TOF.TOFIOSim;
+import frc.hawkLib.hardware.gyro.GyroIOPigeon;
+import frc.hawkLib.hardware.motor.MotorIONothing;
+import frc.hawkLib.hardware.motor.ctre.MotorIOElevatorSim;
+import frc.hawkLib.hardware.motor.ctre.MotorIOSim;
+import frc.hawkLib.hardware.motor.ctre.MotorIOTalonFX;
+import frc.hawkLib.hardware.motor.rev.MotorIOSparkMax;
+import frc.hawkLib.hardware.vision.objectVision.ObjectCameraIOPhoton;
+import frc.hawkLib.hardware.vision.objectVision.ObjectCameraIOSim;
+import frc.hawkLib.hardware.vision.poseVision.PoseCameraIOLimelight;
+import frc.hawkLib.hardware.vision.poseVision.PoseCameraIOPhoton;
+import frc.hawkLib.hardware.vision.poseVision.PoseCameraIOSim;
 import frc.o2026.subsystems.drivebase.Swerve;
+import frc.o2026.subsystems.drivebase.SwerveIOReal;
 import frc.o2026.subsystems.drivebase.Swerve.DesiredState;
-import frc.o2026.subsystems.drivebase.SwerveIOMixed;
 import frc.o2026.subsystems.drivebase.SwerveIOSim;
+import frc.o2026.subsystems.drivebase.SwerveModule;
 import frc.o2026.subsystems.superstructure.Superstucture;
 
 public class RobotContainer extends SubsystemBase {
@@ -80,7 +82,35 @@ public class RobotContainer extends SubsystemBase {
       case Real:
         m_swerve =
             new Swerve(
-                new SwerveIOMixed(
+                new SwerveIOReal(
+                    new SwerveModule(
+                        new MotorIOTalonFX(Constants.CanIds.FrontRightDriveId)
+                            .withConfig(Configs.Chassis.DriveConfig),
+                        new MotorIOTalonFX(Constants.CanIds.FrontRightTurnId)
+                            .withConfig(Configs.Chassis.TurnConfig),
+                        Constants.CanIds.FrontRightEncoderId,
+                        Constants.Chassis.FrontRightForwardsAngle),
+                    new SwerveModule(
+                        new MotorIOTalonFX(Constants.CanIds.FrontLeftDriveId)
+                            .withConfig(Configs.Chassis.DriveConfig),
+                        new MotorIOTalonFX(Constants.CanIds.FrontLeftTurnId)
+                            .withConfig(Configs.Chassis.TurnConfig),
+                        Constants.CanIds.FrontLeftEncoderId,
+                        Constants.Chassis.FrontLeftForwardsAngle),
+                    new SwerveModule(
+                        new MotorIOTalonFX(Constants.CanIds.BackRightDriveId)
+                            .withConfig(Configs.Chassis.DriveConfig),
+                        new MotorIOTalonFX(Constants.CanIds.BackRightTurnId)
+                            .withConfig(Configs.Chassis.TurnConfig),
+                        Constants.CanIds.BackRightEncoderId,
+                        Constants.Chassis.BackRightForwardsAngle),
+                    new SwerveModule(
+                        new MotorIOTalonFX(Constants.CanIds.BackLeftDriveId)
+                            .withConfig(Configs.Chassis.DriveConfig),
+                        new MotorIOTalonFX(Constants.CanIds.BackLeftTurnId)
+                            .withConfig(Configs.Chassis.TurnConfig),
+                        Constants.CanIds.BackLeftEncoderId,
+                        Constants.Chassis.BackLeftForwardsAngle),
                     new GyroIOPigeon(Constants.CanIds.PigeonGyroId),
                     new PoseCameraIOPhoton(Constants.Vision.FrontCamConfig),
                     new PoseCameraIOPhoton(Constants.Vision.WebCam),
@@ -119,7 +149,35 @@ public class RobotContainer extends SubsystemBase {
         m_swerve =
             new Swerve(
                 RobotBase.isReal()
-                    ? new SwerveIOMixed(
+                    ? new SwerveIOReal(
+                        new SwerveModule(
+                            new MotorIOTalonFX(Constants.CanIds.FrontRightDriveId)
+                                .withConfig(Configs.Chassis.DriveConfig),
+                            new MotorIOSparkMax(Constants.CanIds.FrontRightTurnId)
+                                .withConfig(Configs.Chassis.TurnConfig),
+                            Constants.CanIds.FrontRightEncoderId,
+                            Constants.Chassis.FrontRightForwardsAngle),
+                        new SwerveModule(
+                            new MotorIOTalonFX(Constants.CanIds.FrontLeftDriveId)
+                                .withConfig(Configs.Chassis.DriveConfig),
+                            new MotorIOSparkMax(Constants.CanIds.FrontLeftTurnId)
+                                .withConfig(Configs.Chassis.TurnConfig),
+                            Constants.CanIds.FrontLeftEncoderId,
+                            Constants.Chassis.FrontLeftForwardsAngle),
+                        new SwerveModule(
+                            new MotorIOTalonFX(Constants.CanIds.BackRightDriveId)
+                                .withConfig(Configs.Chassis.DriveConfig),
+                            new MotorIOSparkMax(Constants.CanIds.BackRightTurnId)
+                                .withConfig(Configs.Chassis.TurnConfig),
+                            Constants.CanIds.BackRightEncoderId,
+                            Constants.Chassis.BackRightForwardsAngle),
+                        new SwerveModule(
+                            new MotorIOTalonFX(Constants.CanIds.BackLeftDriveId)
+                                .withConfig(Configs.Chassis.DriveConfig),
+                            new MotorIOSparkMax(Constants.CanIds.BackLeftTurnId)
+                                .withConfig(Configs.Chassis.TurnConfig),
+                            Constants.CanIds.BackLeftEncoderId,
+                            Constants.Chassis.BackLeftForwardsAngle),
                         new GyroIOPigeon(Constants.CanIds.PigeonGyroId),
                         new PoseCameraIOPhoton(Constants.Vision.FrontCamConfig),
                         new PoseCameraIOPhoton(Constants.Vision.WebCam),
