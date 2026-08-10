@@ -6,6 +6,12 @@
 
 package frc.o2026;
 
+import static edu.wpi.first.units.Units.Inches;
+import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.Pounds;
+
+import java.util.function.Function;
+
 import com.pathplanner.lib.auto.AutoBuilder;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.SlewRateLimiter;
@@ -21,6 +27,7 @@ import frc.lib.hardware.TOF.TOFIOCANRange;
 import frc.lib.hardware.TOF.TOFIOSim;
 import frc.lib.hardware.gyro.GyroIOPigeon;
 import frc.lib.hardware.motor.MotorIONothing;
+import frc.lib.hardware.motor.ctre.MotorIOElevatorSim;
 import frc.lib.hardware.motor.ctre.MotorIOSim;
 import frc.lib.hardware.motor.ctre.MotorIOTalonFX;
 import frc.lib.hardware.vision.objectVision.ObjectCameraIOPhoton;
@@ -30,7 +37,7 @@ import frc.lib.hardware.vision.poseVision.PoseCameraIOPhoton;
 import frc.lib.hardware.vision.poseVision.PoseCameraIOSim;
 import frc.o2026.subsystems.drivebase.Swerve;
 import frc.o2026.subsystems.drivebase.Swerve.DesiredState;
-import frc.o2026.subsystems.drivebase.SwerveIOReal;
+import frc.o2026.subsystems.drivebase.SwerveIOMixed;
 import frc.o2026.subsystems.drivebase.SwerveIOSim;
 import frc.o2026.subsystems.superstructure.Superstucture;
 
@@ -73,7 +80,7 @@ public class RobotContainer extends SubsystemBase {
       case Real:
         m_swerve =
             new Swerve(
-                new SwerveIOReal(
+                new SwerveIOMixed(
                     new GyroIOPigeon(Constants.CanIds.PigeonGyroId),
                     new PoseCameraIOPhoton(Constants.Vision.FrontCamConfig),
                     new PoseCameraIOPhoton(Constants.Vision.WebCam),
@@ -112,7 +119,7 @@ public class RobotContainer extends SubsystemBase {
         m_swerve =
             new Swerve(
                 RobotBase.isReal()
-                    ? new SwerveIOReal(
+                    ? new SwerveIOMixed(
                         new GyroIOPigeon(Constants.CanIds.PigeonGyroId),
                         new PoseCameraIOPhoton(Constants.Vision.FrontCamConfig),
                         new PoseCameraIOPhoton(Constants.Vision.WebCam),
@@ -154,29 +161,33 @@ public class RobotContainer extends SubsystemBase {
                     Constants.CanIds.PivotLeaderMotorId,
                     Configs.Superstructure.PivotConfig,
                     true,
-                    DCMotor.getKrakenX60(4),
                     0.1,
+                    4,
                     Configs.Superstructure.PivotGearRatio),
                 new MotorIONothing(),
                 new MotorIONothing(),
                 new MotorIONothing(),
 
                 // ELEVATOR
-                new MotorIOSim(
+                new MotorIOElevatorSim(
                     Constants.CanIds.ElevatorMotorId,
                     Configs.Superstructure.ElevatorConfig,
                     true,
-                    DCMotor.getKrakenX60(1),
                     0.06,
-                    Configs.Superstructure.ElevatorGearRatio),
+                    1,
+                    Configs.Superstructure.ElevatorGearRatio,
+                    Inches.of(0.0),
+                    Inches.of(40.0),
+                    Pounds.of(20.0),
+                    Meters.of(Constants.Superstructure.ElevatorSpoolRadiusMeters)),
 
                 // WRIST
                 new MotorIOSim(
                     Constants.CanIds.WristMotorId,
                     Configs.Superstructure.WristConfig,
                     false,
-                    DCMotor.getKrakenX44(1),
                     0.01,
+                    1,
                     Configs.Superstructure.WristGearRatio),
 
                 // ROLLERS
@@ -184,8 +195,8 @@ public class RobotContainer extends SubsystemBase {
                     Constants.CanIds.RollerLeaderMotorId,
                     Configs.Superstructure.RollerConfig,
                     false,
-                    DCMotor.getKrakenX44(1),
                     0.007,
+                    1,
                     Configs.Superstructure.RollerGearRatio),
                 new MotorIONothing(),
                 // SENSOR
@@ -212,11 +223,8 @@ public class RobotContainer extends SubsystemBase {
     m_driver.leftStick().onTrue(m_swerve.toggleFieldCentricity().asProxy());
 
     m_driver.y().onTrue(m_superstructure.L4());
-
     m_driver.x().onTrue(m_superstructure.L3());
-
     m_driver.b().onTrue(m_superstructure.L2());
-
     m_driver.a().onTrue(m_superstructure.L1());
 
     m_driver
@@ -224,43 +232,18 @@ public class RobotContainer extends SubsystemBase {
         .and(m_swerve::hasObjects)
         .whileTrue(
             m_swerve
-                .runOnce(
-                    () -> m_swerve.setState(Swerve.DesiredState.intakeAssist.with(getSpeeds())))
-                .repeatedly())
-        .onFalse(
-            m_swerve.run(
-                () -> m_swerve.setState(Swerve.DesiredState.driveDefault.with(getSpeeds()))));
+                .run(
+                    () -> m_swerve.setState(Swerve.DesiredState.intakeAssist.with(getSpeeds()))));
 
     m_driver
         .leftTrigger()
         .whileTrue(m_superstructure.coralIntake())
         .onFalse(m_superstructure.home());
 
-    m_driver
-        .rightBumper()
-        .whileTrue(
-            m_swerve
-                .defer(
-                    () -> {
-                      var pointOpt = m_superstructure.getDrivePointToScore(true);
-                      if (pointOpt.isPresent()) return m_swerve.bLinePathPose(pointOpt.get());
-                      else return idle().asProxy();
-                    })
-                .repeatedly()
-                .until(m_swerve::isAtPidPose)
-                .andThen(m_superstructure.score().withName("SCOREEEE"))
-                .withName("SCOREE"))
-        .onFalse(
-            m_swerve.run(
-                () -> m_swerve.setState(Swerve.DesiredState.driveDefault.with(getSpeeds()))));
-
-    m_driver
-        .leftBumper()
-        .whileTrue(
-            m_swerve.defer(
-                () -> {
-                  var pointOpt = m_superstructure.getDrivePointToScore(false);
-                  if (pointOpt.isPresent()) {
+    Function<Boolean, Command> autoScore = (isRight) ->
+        m_swerve.defer(() -> {
+                  var pointOpt = m_superstructure.getDrivePointToScore(isRight);
+                  if (pointOpt.isPresent())
                     return m_swerve
                         .run(() -> m_swerve.setState(DesiredState.pidPose.with(pointOpt.get())))
                         .repeatedly()
@@ -273,13 +256,17 @@ public class RobotContainer extends SubsystemBase {
                                         () ->
                                             m_swerve.setState(
                                                 DesiredState.pidPose.with(pointOpt.get())))));
-                  } else {
+                  else
                     return idle().asProxy();
-                  }
-                }))
-        .onFalse(
-            m_swerve.run(
-                () -> m_swerve.setState(Swerve.DesiredState.driveDefault.with(getSpeeds()))));
+                });
+
+    m_driver
+        .rightBumper()
+        .whileTrue(autoScore.apply(true));
+
+    m_driver
+        .leftBumper()
+        .whileTrue(autoScore.apply(false));
 
     // Util.sendLambda(
     //     "yUp",

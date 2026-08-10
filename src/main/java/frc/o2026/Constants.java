@@ -107,9 +107,9 @@ public final class Constants {
     public static final Distance CoralScoreYOffset = Inches.of(-6.467946);
 
     public static final double ElevatorGearRatio = (12.0 / 1.0) * (64.0 / 18.0);
-    public static final double ElevatorSpoolRadius = Units.inchesToMeters(0.758);
+    public static final double ElevatorSpoolRadiusMeters = Units.inchesToMeters(0.758);
     public static final double ElevatorMetersToRotations =
-        1 / (ElevatorSpoolRadius * 2.0 * Math.PI);
+        1 / (ElevatorSpoolRadiusMeters * 2.0 * Math.PI);
 
     public static record ArmPosition(Angle pivot, Distance elevator, Angle wrist) {}
 

@@ -6,9 +6,12 @@
 
 package frc.lib;
 
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.lib.BLine.FlippingUtil;
 
 public class Util {
 
@@ -18,5 +21,14 @@ public class Util {
 
   public static Command lambdaAsCommand(Runnable runnable) {
     return Commands.run(runnable).asProxy();
+  }
+  
+  public static boolean isRed() {
+    return DriverStation.getAlliance().orElse(DriverStation.Alliance.Red)
+        == DriverStation.Alliance.Red;
+  }
+
+  public static Pose2d flipOnRed(Pose2d pose) {
+    return isRed() ? FlippingUtil.flipFieldPose(pose) : pose;
   }
 }

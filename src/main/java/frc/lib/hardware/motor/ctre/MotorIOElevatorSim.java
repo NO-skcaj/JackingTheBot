@@ -7,6 +7,8 @@
 package frc.lib.hardware.motor.ctre;
 
 import static edu.wpi.first.units.Units.Amps;
+import static edu.wpi.first.units.Units.Kilogram;
+import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 import static edu.wpi.first.units.Units.Volts;
 
@@ -16,34 +18,57 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.units.measure.Mass;
+import edu.wpi.first.wpilibj.simulation.ElevatorSim;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import frc.lib.hardware.SimBattery;
 import frc.lib.hardware.motor.MotorConfig;
 
-public class MotorIOFlywheelSim extends MotorIOTalonFX {
+public class MotorIOElevatorSim extends MotorIOTalonFX {
 
   private final TalonFXSimState m_talonFXSim;
 
-  private final FlywheelSim m_motorSimModel;
+  private final ElevatorSim m_motorSimModel;
 
   private double m_gearRatio;
+  private Distance m_drumWidth;
 
-  public MotorIOFlywheelSim(
-      int id, MotorConfig config, boolean isX60, double moi, int numMotorsInSystem, double gearRatio) {
+  public MotorIOElevatorSim(
+      int id, 
+      MotorConfig config, 
+      boolean isX60, 
+      double moi, 
+      int numMotorsInSystem, 
+      double gearRatio,
+      Distance minHeight,
+      Distance maxHeight,
+      Mass carriageWeight,
+      Distance drumWidth) {
 
     super(id, config);
 
+    m_drumWidth = drumWidth;
+
     m_talonFXSim = m_motor.getSimState();
     m_talonFXSim.setMotorType(isX60 ? MotorType.KrakenX60 : MotorType.KrakenX44);
-
+    
     DCMotor motor = isX60 ? DCMotor.getKrakenX60(numMotorsInSystem) : DCMotor.getKrakenX44(numMotorsInSystem);
 
     m_motorSimModel =
-        new FlywheelSim(LinearSystemId.createFlywheelSystem(motor, moi, gearRatio), motor);
+        new ElevatorSim(
+            motor,
+            gearRatio,
+            carriageWeight.in(Kilogram),
+            drumWidth.in(Meters),
+            minHeight.in(Meters),
+            maxHeight.in(Meters),
+            true,
+0.0);
 
     m_gearRatio = gearRatio;
 
-    SimBattery.registerDevice(String.valueOf(id), m_motor.getSupplyCurrent().asSupplier());
+    SimBattery.registerDevice(String.valueOf(id), () -> Amps.of(m_motorSimModel.getCurrentDrawAmps()));
   }
 
   @Override
@@ -68,7 +93,7 @@ public class MotorIOFlywheelSim extends MotorIOTalonFX {
     // note that this is rotor position/velocity (before gear ratio), but
     // DCMotorSim returns mechanism position/velocity (after gear ratio)
     m_talonFXSim.setRotorVelocity(
-        m_motorSimModel.getAngularVelocity().in(RotationsPerSecond) * m_gearRatio);
+        (m_motorSimModel.getVelocityMetersPerSecond() / m_drumWidth.in(Meters)));
   }
 
   @Override
@@ -76,8 +101,8 @@ public class MotorIOFlywheelSim extends MotorIOTalonFX {
 
     super.updateInputs(inputs);
 
-    inputs.appliedVolts = Volts.of(m_motorSimModel.getInputVoltage());
     inputs.statorCurrent = Amps.of(m_motorSimModel.getCurrentDrawAmps());
+    inputs.appliedVolts = Volts.of(m_motorSimModel.getInput().get(0, 0));
   }
 
   @Override

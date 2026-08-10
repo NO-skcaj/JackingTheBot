@@ -28,15 +28,17 @@ public class MotorIOSim extends MotorIOTalonFX {
   private final double m_gearRatio;
 
   public MotorIOSim(
-      int id, MotorConfig config, boolean isX60, DCMotor gearbox, double moi, double gearRatio) {
+      int id, MotorConfig config, boolean isX60, double moi, int numMotorsInSystem, double gearRatio) {
 
     super(id, config);
 
     m_talonFXSim = m_motor.getSimState();
     m_talonFXSim.setMotorType(isX60 ? MotorType.KrakenX60 : MotorType.KrakenX44);
 
+    DCMotor motor = isX60 ? DCMotor.getKrakenX60(numMotorsInSystem) : DCMotor.getKrakenX44(numMotorsInSystem);
+
     m_motorSimModel =
-        new DCMotorSim(LinearSystemId.createDCMotorSystem(gearbox, moi, gearRatio), gearbox);
+        new DCMotorSim(LinearSystemId.createDCMotorSystem(motor, moi, gearRatio), motor);
 
     m_gearRatio = gearRatio;
 
