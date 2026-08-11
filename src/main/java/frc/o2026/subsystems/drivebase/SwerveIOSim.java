@@ -17,13 +17,13 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.system.plant.DCMotor;
+import frc.o2026.Constants;
+import frc.o2026.RobotState;
 import frc.shared.hardware.vision.poseVision.PoseCameraIO;
 import frc.shared.hardware.vision.poseVision.PoseVision;
 import frc.shared.reefscape.ReefscapeIntakeUtil;
 import frc.shared.sim.SelfControlledSwerveDriveSimulation;
 import frc.shared.sim.SwerveDriveSimulation;
-import frc.o2026.Constants;
-import frc.o2026.RobotState;
 import org.ironmaple.simulation.IntakeSimulation;
 import org.ironmaple.simulation.IntakeSimulation.IntakeSide;
 import org.ironmaple.simulation.drivesims.COTS;
@@ -98,7 +98,6 @@ public class SwerveIOSim implements SwerveIO {
   @Override
   public Pose2d getPose() {
 
-    // return m_swerve.getOdometryEstimatedPose();
     return m_swerve.getOdometryEstimatedPose();
   }
 
@@ -145,7 +144,8 @@ public class SwerveIOSim implements SwerveIO {
 
     if (RobotState.isSimIntaking() && !RobotState.isHasCoral()) {
       m_intake.startIntake();
-      if (m_intake.obtainGamePieceFromIntake() || ReefscapeIntakeUtil.hasNewCoralFromCollector(RobotState.getSimArena())) {
+      if (m_intake.obtainGamePieceFromIntake()
+          || ReefscapeIntakeUtil.hasNewCoralFromCollector(RobotState.getSimArena())) {
         RobotState.setHasCoral(true);
       }
     } else {

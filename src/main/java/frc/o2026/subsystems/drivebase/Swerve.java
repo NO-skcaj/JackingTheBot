@@ -27,18 +27,17 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.shared.Util;
-import frc.shared.hardware.vision.objectVision.ObjectCameraIO;
-import frc.shared.hardware.vision.objectVision.ObjectVision;
 import frc.o2026.Configs;
 import frc.o2026.Constants;
 import frc.o2026.RobotState;
 import frc.robot.lib.BLine.FollowPath;
 import frc.robot.lib.BLine.Path;
 import frc.robot.lib.BLine.Path.PathElement;
+import frc.shared.Util;
+import frc.shared.hardware.vision.objectVision.ObjectCameraIO;
+import frc.shared.hardware.vision.objectVision.ObjectVision;
 import java.util.List;
 import java.util.Optional;
-
 import org.littletonrobotics.junction.Logger;
 
 public class Swerve extends SubsystemBase {
@@ -48,7 +47,7 @@ public class Swerve extends SubsystemBase {
 
   private Optional<Rotation2d> m_odDirection = Optional.empty();
 
-  private boolean m_fieldCentricity = true;
+  private boolean m_fieldCentricity = false;
 
   FollowPath.Builder m_pathBuilder;
 
@@ -62,10 +61,10 @@ public class Swerve extends SubsystemBase {
     m_objectDetection = new ObjectVision(odIo);
 
     m_rotController.enableContinuousInput(-Math.PI, Math.PI);
-    m_rotController.setTolerance(Units.degreesToRadians(10.0));
-    m_xController.setTolerance(0.1);
+    m_rotController.setTolerance(Units.degreesToRadians(5.0));
+    m_xController.setTolerance(0.05);
     m_xController.disableContinuousInput();
-    m_yController.setTolerance(0.1);
+    m_yController.setTolerance(0.05);
     m_yController.disableContinuousInput();
 
     RobotConfig config;
@@ -189,7 +188,7 @@ public class Swerve extends SubsystemBase {
                 m_rotController.calculate(
                     measure.getRotation().getRadians(),
                     m_desiredState.poseTarget.getRotation().getRadians())),
-            m_fieldCentricity);
+            true);
         break;
 
       case aim:
@@ -204,8 +203,7 @@ public class Swerve extends SubsystemBase {
         break;
 
       case intakeAssist:
-        if (m_odDirection.isEmpty())
-          m_odDirection = m_objectDetection.directionToObject();
+        if (m_odDirection.isEmpty()) m_odDirection = m_objectDetection.directionToObject();
 
         var assistSpeeds =
             new Translation2d(Configs.Chassis.IntakeAssistSpeed.in(MetersPerSecond), 0.0)
@@ -221,7 +219,10 @@ public class Swerve extends SubsystemBase {
                               m_odDirection
                                   .get()
                                   .getMeasure()
-                                  .plus(Constants.Vision.FrontCamConfig.offset().getRotation().getMeasureZ())
+                                  .plus(
+                                      Constants.Vision.FrontCamConfig.offset()
+                                          .getRotation()
+                                          .getMeasureZ())
                                   .in(Radians))
                           * Configs.Chassis.IntakeAssistRotationPower),
               m_fieldCentricity);
@@ -255,14 +256,13 @@ public class Swerve extends SubsystemBase {
 
   private void drive(ChassisSpeeds speeds, boolean fieldRelative) {
 
+    Rotation2d driveHeading =
+        m_desiredState == DesiredState.pidPose
+            ? getHeading()
+            : (Util.isRed() ? getHeading() : getHeading().plus(Rotation2d.k180deg));
+
     var desiredStates =
-        fieldRelative
-            ? ChassisSpeeds.fromFieldRelativeSpeeds(
-                speeds,
-                (Util.isRed() && m_desiredState != DesiredState.pidPose
-                    ? getHeading()
-                    : getHeading().plus(Rotation2d.k180deg)))
-            : speeds;
+        fieldRelative ? ChassisSpeeds.fromFieldRelativeSpeeds(speeds, driveHeading) : speeds;
 
     m_io.driveRobotRelative(desiredStates);
 

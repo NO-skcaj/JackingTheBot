@@ -16,12 +16,11 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import frc.o2026.Constants;
 import frc.shared.hardware.gyro.GyroIO;
 import frc.shared.hardware.gyro.GyroIONavX;
 import frc.shared.hardware.vision.poseVision.PoseCameraIO;
 import frc.shared.hardware.vision.poseVision.PoseVision;
-import frc.o2026.Configs;
-import frc.o2026.Constants;
 import org.littletonrobotics.junction.Logger;
 
 /// @brief Chassis subsystem for swerve drive control
@@ -73,10 +72,13 @@ public class SwerveIOReal implements SwerveIO {
 
   private GyroIO m_GyroIO2 = new GyroIONavX();
 
-  public SwerveIOReal(SwerveModule fr, SwerveModule fl, 
-                      SwerveModule br, SwerveModule bl, 
-                      GyroIO gyroIO, 
-                      PoseCameraIO... cameras) {
+  public SwerveIOReal(
+      SwerveModule fr,
+      SwerveModule fl,
+      SwerveModule br,
+      SwerveModule bl,
+      GyroIO gyroIO,
+      PoseCameraIO... cameras) {
 
     m_gyroIO = gyroIO;
 

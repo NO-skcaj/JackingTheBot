@@ -18,10 +18,9 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.o2026.Constants;
 import frc.shared.hardware.motor.MotorIO;
 import frc.shared.hardware.motor.MotorIO.MotorInputs;
-import frc.o2026.Configs;
-import frc.o2026.Constants;
 
 public class SwerveModule extends SubsystemBase {
   private final MotorIO m_drivingMotor;

@@ -10,19 +10,22 @@ import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Pounds;
 
-import java.util.function.Function;
-
 import com.pathplanner.lib.auto.AutoBuilder;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import frc.o2026.subsystems.Superstucture;
+import frc.o2026.subsystems.drivebase.Swerve;
+import frc.o2026.subsystems.drivebase.Swerve.DesiredState;
+import frc.o2026.subsystems.drivebase.SwerveIOReal;
+import frc.o2026.subsystems.drivebase.SwerveIOSim;
+import frc.o2026.subsystems.drivebase.SwerveModule;
 import frc.shared.hardware.TOF.TOFIOCANRange;
 import frc.shared.hardware.TOF.TOFIOSim;
 import frc.shared.hardware.gyro.GyroIOPigeon;
@@ -33,16 +36,10 @@ import frc.shared.hardware.motor.ctre.MotorIOTalonFX;
 import frc.shared.hardware.motor.rev.MotorIOSparkMax;
 import frc.shared.hardware.vision.objectVision.ObjectCameraIOPhoton;
 import frc.shared.hardware.vision.objectVision.ObjectCameraIOSim;
-import frc.shared.hardware.vision.objectVision.ObjectVision;
 import frc.shared.hardware.vision.poseVision.PoseCameraIOLimelight;
 import frc.shared.hardware.vision.poseVision.PoseCameraIOPhoton;
 import frc.shared.hardware.vision.poseVision.PoseCameraIOSim;
-import frc.o2026.subsystems.drivebase.Swerve;
-import frc.o2026.subsystems.drivebase.SwerveIOReal;
-import frc.o2026.subsystems.drivebase.Swerve.DesiredState;
-import frc.o2026.subsystems.drivebase.SwerveIOSim;
-import frc.o2026.subsystems.drivebase.SwerveModule;
-import frc.o2026.subsystems.superstructure.Superstucture;
+import java.util.function.Function;
 
 public class RobotContainer extends SubsystemBase {
 
@@ -85,30 +82,39 @@ public class RobotContainer extends SubsystemBase {
             new Swerve(
                 new SwerveIOReal(
                     new SwerveModule(
-                        new MotorIOTalonFX(Constants.CanIds.FrontRightDriveId, Configs.Chassis.DriveConfig),
-                        new MotorIOTalonFX(Constants.CanIds.FrontRightTurnId, Configs.Chassis.TurnConfig),
+                        new MotorIOTalonFX(
+                            Constants.CanIds.FrontRightDriveId, Configs.Chassis.DriveConfig),
+                        new MotorIOTalonFX(
+                            Constants.CanIds.FrontRightTurnId, Configs.Chassis.TurnConfig),
                         Constants.CanIds.FrontRightEncoderId,
                         Constants.Chassis.FrontRightForwardsAngle),
                     new SwerveModule(
-                        new MotorIOTalonFX(Constants.CanIds.FrontLeftDriveId, Configs.Chassis.DriveConfig),
-                        new MotorIOTalonFX(Constants.CanIds.FrontLeftTurnId, Configs.Chassis.TurnConfig),
+                        new MotorIOTalonFX(
+                            Constants.CanIds.FrontLeftDriveId, Configs.Chassis.DriveConfig),
+                        new MotorIOTalonFX(
+                            Constants.CanIds.FrontLeftTurnId, Configs.Chassis.TurnConfig),
                         Constants.CanIds.FrontLeftEncoderId,
                         Constants.Chassis.FrontLeftForwardsAngle),
                     new SwerveModule(
-                        new MotorIOTalonFX(Constants.CanIds.BackRightDriveId, Configs.Chassis.DriveConfig),
-                        new MotorIOTalonFX(Constants.CanIds.BackRightTurnId, Configs.Chassis.TurnConfig),
+                        new MotorIOTalonFX(
+                            Constants.CanIds.BackRightDriveId, Configs.Chassis.DriveConfig),
+                        new MotorIOTalonFX(
+                            Constants.CanIds.BackRightTurnId, Configs.Chassis.TurnConfig),
                         Constants.CanIds.BackRightEncoderId,
                         Constants.Chassis.BackRightForwardsAngle),
                     new SwerveModule(
-                        new MotorIOTalonFX(Constants.CanIds.BackLeftDriveId, Configs.Chassis.DriveConfig),
-                        new MotorIOTalonFX(Constants.CanIds.BackLeftTurnId, Configs.Chassis.TurnConfig),
+                        new MotorIOTalonFX(
+                            Constants.CanIds.BackLeftDriveId, Configs.Chassis.DriveConfig),
+                        new MotorIOTalonFX(
+                            Constants.CanIds.BackLeftTurnId, Configs.Chassis.TurnConfig),
                         Constants.CanIds.BackLeftEncoderId,
                         Constants.Chassis.BackLeftForwardsAngle),
                     new GyroIOPigeon(Constants.CanIds.PigeonGyroId),
                     new PoseCameraIOPhoton(Constants.Vision.FrontCamConfig),
                     new PoseCameraIOPhoton(Constants.Vision.WebCam),
                     new PoseCameraIOLimelight(Constants.Vision.LimelightOfDoomAndDespair)),
-                new ObjectCameraIOPhoton(Constants.Vision.BackCamConfig, Constants.Field.CoralDiameter));
+                new ObjectCameraIOPhoton(
+                    Constants.Vision.BackCamConfig, Constants.Field.CoralDiameter));
 
         m_superstructure =
             new Superstucture(
@@ -143,31 +149,39 @@ public class RobotContainer extends SubsystemBase {
             new Swerve(
                 new SwerveIOReal(
                     new SwerveModule(
-                    new MotorIOTalonFX(Constants.CanIds.FrontRightDriveId, Configs.Chassis.DriveConfig),
-                    new MotorIOSparkMax(Constants.CanIds.FrontRightTurnId, Configs.Chassis.TurnConfig),
-                    Constants.CanIds.FrontRightEncoderId,
-                    Constants.Chassis.FrontRightForwardsAngle),
+                        new MotorIOTalonFX(
+                            Constants.CanIds.FrontRightDriveId, Configs.Chassis.DriveConfig),
+                        new MotorIOSparkMax(
+                            Constants.CanIds.FrontRightTurnId, Configs.Chassis.TurnConfig),
+                        Constants.CanIds.FrontRightEncoderId,
+                        Constants.Chassis.FrontRightForwardsAngle),
                     new SwerveModule(
-                        new MotorIOTalonFX(Constants.CanIds.FrontLeftDriveId, Configs.Chassis.DriveConfig),
-                        new MotorIOSparkMax(Constants.CanIds.FrontLeftTurnId, Configs.Chassis.TurnConfig),
+                        new MotorIOTalonFX(
+                            Constants.CanIds.FrontLeftDriveId, Configs.Chassis.DriveConfig),
+                        new MotorIOSparkMax(
+                            Constants.CanIds.FrontLeftTurnId, Configs.Chassis.TurnConfig),
                         Constants.CanIds.FrontLeftEncoderId,
                         Constants.Chassis.FrontLeftForwardsAngle),
                     new SwerveModule(
-                        new MotorIOTalonFX(Constants.CanIds.BackRightDriveId, Configs.Chassis.DriveConfig),
-                        new MotorIOSparkMax(Constants.CanIds.BackRightTurnId, Configs.Chassis.TurnConfig),
+                        new MotorIOTalonFX(
+                            Constants.CanIds.BackRightDriveId, Configs.Chassis.DriveConfig),
+                        new MotorIOSparkMax(
+                            Constants.CanIds.BackRightTurnId, Configs.Chassis.TurnConfig),
                         Constants.CanIds.BackRightEncoderId,
                         Constants.Chassis.BackRightForwardsAngle),
                     new SwerveModule(
-                        new MotorIOTalonFX(Constants.CanIds.BackLeftDriveId, Configs.Chassis.DriveConfig),
-                        new MotorIOSparkMax(Constants.CanIds.BackLeftTurnId, Configs.Chassis.TurnConfig),
+                        new MotorIOTalonFX(
+                            Constants.CanIds.BackLeftDriveId, Configs.Chassis.DriveConfig),
+                        new MotorIOSparkMax(
+                            Constants.CanIds.BackLeftTurnId, Configs.Chassis.TurnConfig),
                         Constants.CanIds.BackLeftEncoderId,
                         Constants.Chassis.BackLeftForwardsAngle),
                     new GyroIOPigeon(Constants.CanIds.PigeonGyroId),
                     new PoseCameraIOPhoton(Constants.Vision.FrontCamConfig),
                     new PoseCameraIOPhoton(Constants.Vision.WebCam),
                     new PoseCameraIOLimelight(Constants.Vision.LimelightOfDoomAndDespair)),
-                new ObjectCameraIOPhoton(Constants.Vision.BackCamConfig, Constants.Field.CoralDiameter)
-            );
+                new ObjectCameraIOPhoton(
+                    Constants.Vision.BackCamConfig, Constants.Field.CoralDiameter));
 
         m_superstructure =
             new Superstucture(
@@ -210,13 +224,13 @@ public class RobotContainer extends SubsystemBase {
                     Constants.CanIds.ElevatorMotorId,
                     Configs.Superstructure.ElevatorConfig,
                     true,
-                    0.06,
+                    0.01,
                     1,
                     Configs.Superstructure.ElevatorGearRatio,
                     Inches.of(0.0),
-                    Inches.of(40.0),
-                    Pounds.of(20.0),
-                    Meters.of(Constants.Superstructure.ElevatorSpoolRadiusMeters)),
+                    Inches.of(75.0),
+                    Pounds.of(15.0),
+                    Meters.of(Constants.Superstructure.ElevatorSpoolRadiusMeters).times(2.0)),
 
                 // WRIST
                 new MotorIOSim(
@@ -264,46 +278,42 @@ public class RobotContainer extends SubsystemBase {
     m_driver.b().onTrue(m_superstructure.L2());
     m_driver.a().onTrue(m_superstructure.L1());
 
-    m_driver
-        .leftTrigger()
-        .and(m_swerve::hasObjects)
-        .whileTrue(
-            m_swerve
-                .run(
-                    () -> m_swerve.setState(Swerve.DesiredState.intakeAssist.with(getSpeeds()))));
+    // m_driver
+    //     .leftTrigger()
+    //     .and(m_swerve::hasObjects)
+    //     .whileTrue(
+    //         m_swerve.run(
+    //             () -> m_swerve.setState(Swerve.DesiredState.intakeAssist.with(getSpeeds()))));
 
     m_driver
         .leftTrigger()
         .whileTrue(m_superstructure.coralIntake())
         .onFalse(m_superstructure.home());
 
-    Function<Boolean, Command> autoScore = (isRight) ->
-        m_swerve.defer(() -> {
+    Function<Boolean, Command> autoScore =
+        (isRight) ->
+            m_swerve.defer(
+                () -> {
                   var pointOpt = m_superstructure.getDrivePointToScore(isRight);
                   if (pointOpt.isPresent())
                     return m_swerve
                         .run(() -> m_swerve.setState(DesiredState.pidPose.with(pointOpt.get())))
-                        .repeatedly()
                         .until(m_swerve::isAtPidPose)
                         .andThen(
                             m_superstructure
-                                .score()
+                                .score(isRight)
+                                    .onlyIf(m_superstructure::isAtSetpoint)
                                 .alongWith(
                                     m_swerve.run(
                                         () ->
                                             m_swerve.setState(
                                                 DesiredState.pidPose.with(pointOpt.get())))));
-                  else
-                    return idle().asProxy();
+                  else return Commands.none();
                 });
 
-    m_driver
-        .rightBumper()
-        .whileTrue(autoScore.apply(true));
+    m_driver.rightBumper().whileTrue(autoScore.apply(true));
 
-    m_driver
-        .leftBumper()
-        .whileTrue(autoScore.apply(false));
+    m_driver.leftBumper().whileTrue(autoScore.apply(false));
 
     // Util.sendLambda(
     //     "yUp",
@@ -333,25 +343,25 @@ public class RobotContainer extends SubsystemBase {
 
     // m_guitar.A()
     //     .onTrue(
-    //         Util.lambdaAsCommand(
+    //         Util.run(
     //             () ->
     //                 m_swerve.setState(
     //                     DesiredState.driveRobot.with(new ChassisSpeeds(-0.5, 0.0, 0.0)))));
     // m_guitar.D()
     //     .onTrue(
-    //         Util.lambdaAsCommand(
+    //         Util.run(
     //             () ->
     //                 m_swerve.setState(
     //                     DesiredState.driveRobot.with(new ChassisSpeeds(0.5, 0.0, 0.0)))));
     // m_guitar.G()
     //     .onTrue(
-    //         Util.lambdaAsCommand(
+    //         Util.run(
     //             () ->
     //                 m_swerve.setState(
     //                     DesiredState.driveRobot.with(new ChassisSpeeds(0.0, -0.5, 0.0)))));
     // m_guitar.B()
     //     .onTrue(
-    //         Util.lambdaAsCommand(
+    //         Util.run(
     //             () ->d
     //                 m_swerve.setState(
     //                     DesiredState.driveRobot.with(new ChassisSpeeds(0.0, 0.5, 0.0)))));
@@ -362,7 +372,7 @@ public class RobotContainer extends SubsystemBase {
     //         m_swerve.defer(
     //             () -> {
     //               return Commands.race(
-    //                   Util.lambdaAsCommand(
+    //                   Util.run(
     //                       () ->
     //                           m_swerve.setState(
     //                               Swerve.DesiredState.aim.with(

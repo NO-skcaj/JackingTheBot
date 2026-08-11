@@ -14,7 +14,6 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.shared.hardware.SimBattery;
 import frc.shared.hardware.motor.ctre.OrchestraOrchestrator;
 import frc.shared.reefscape.ReefscapeScoring;
-
 import java.util.stream.Stream;
 import org.ironmaple.simulation.gamepieces.GamePieceOnFieldSimulation;
 import org.littletonrobotics.junction.LoggedRobot;

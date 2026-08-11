@@ -36,7 +36,7 @@ public class Configs {
     // The standard deviations of our vision estimated poses, which affect correction rate
     // (Fake values. Experiment and determine estimation noise on an actual robot.)
     public static final Matrix<N4, N1> kSingleTagStdDevs =
-        VecBuilder.fill(4, 4, 4, Double.MAX_VALUE);
+        VecBuilder.fill(2, 2, 2, Double.MAX_VALUE);
 
     public static final Matrix<N4, N1> kMultiTagStdDevs =
         VecBuilder.fill(0.4, 0.4, 1.0, Double.MAX_VALUE);
@@ -64,7 +64,7 @@ public class Configs {
             .withAccelerationLimit(RotationsPerSecondPerSecond.of(1))
             .withSensorToMechanismRatio(PivotGearRatio);
 
-    public static final double ElevatorGearRatio = 3.0 * (64.0 / 18.0);
+    public static final double ElevatorGearRatio = 4.0 * 3.0 * (64.0 / 18.0);
 
     public static final MotorConfig ElevatorConfig =
         new MotorConfig()
@@ -76,9 +76,8 @@ public class Configs {
             .withP(10.0)
             .withI(0.0)
             .withD(0.5)
-            .withV(5.12)
-            .withVelocityLimit(RotationsPerSecond.of(10))
-            .withAccelerationLimit(RotationsPerSecondPerSecond.of(10))
+            .withVelocityLimit(RotationsPerSecond.of(120))
+            .withAccelerationLimit(RotationsPerSecondPerSecond.of(120))
             .withSensorToMechanismRatio(ElevatorGearRatio);
 
     public static final double WristGearRatio = (48.0 / 8.0);
