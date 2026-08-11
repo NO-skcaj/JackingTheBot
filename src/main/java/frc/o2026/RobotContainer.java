@@ -33,6 +33,7 @@ import frc.shared.hardware.motor.ctre.MotorIOTalonFX;
 import frc.shared.hardware.motor.rev.MotorIOSparkMax;
 import frc.shared.hardware.vision.objectVision.ObjectCameraIOPhoton;
 import frc.shared.hardware.vision.objectVision.ObjectCameraIOSim;
+import frc.shared.hardware.vision.objectVision.ObjectVision;
 import frc.shared.hardware.vision.poseVision.PoseCameraIOLimelight;
 import frc.shared.hardware.vision.poseVision.PoseCameraIOPhoton;
 import frc.shared.hardware.vision.poseVision.PoseCameraIOSim;
@@ -84,38 +85,30 @@ public class RobotContainer extends SubsystemBase {
             new Swerve(
                 new SwerveIOReal(
                     new SwerveModule(
-                        new MotorIOTalonFX(Constants.CanIds.FrontRightDriveId)
-                            .withConfig(Configs.Chassis.DriveConfig),
-                        new MotorIOTalonFX(Constants.CanIds.FrontRightTurnId)
-                            .withConfig(Configs.Chassis.TurnConfig),
+                        new MotorIOTalonFX(Constants.CanIds.FrontRightDriveId, Configs.Chassis.DriveConfig),
+                        new MotorIOTalonFX(Constants.CanIds.FrontRightTurnId, Configs.Chassis.TurnConfig),
                         Constants.CanIds.FrontRightEncoderId,
                         Constants.Chassis.FrontRightForwardsAngle),
                     new SwerveModule(
-                        new MotorIOTalonFX(Constants.CanIds.FrontLeftDriveId)
-                            .withConfig(Configs.Chassis.DriveConfig),
-                        new MotorIOTalonFX(Constants.CanIds.FrontLeftTurnId)
-                            .withConfig(Configs.Chassis.TurnConfig),
+                        new MotorIOTalonFX(Constants.CanIds.FrontLeftDriveId, Configs.Chassis.DriveConfig),
+                        new MotorIOTalonFX(Constants.CanIds.FrontLeftTurnId, Configs.Chassis.TurnConfig),
                         Constants.CanIds.FrontLeftEncoderId,
                         Constants.Chassis.FrontLeftForwardsAngle),
                     new SwerveModule(
-                        new MotorIOTalonFX(Constants.CanIds.BackRightDriveId)
-                            .withConfig(Configs.Chassis.DriveConfig),
-                        new MotorIOTalonFX(Constants.CanIds.BackRightTurnId)
-                            .withConfig(Configs.Chassis.TurnConfig),
+                        new MotorIOTalonFX(Constants.CanIds.BackRightDriveId, Configs.Chassis.DriveConfig),
+                        new MotorIOTalonFX(Constants.CanIds.BackRightTurnId, Configs.Chassis.TurnConfig),
                         Constants.CanIds.BackRightEncoderId,
                         Constants.Chassis.BackRightForwardsAngle),
                     new SwerveModule(
-                        new MotorIOTalonFX(Constants.CanIds.BackLeftDriveId)
-                            .withConfig(Configs.Chassis.DriveConfig),
-                        new MotorIOTalonFX(Constants.CanIds.BackLeftTurnId)
-                            .withConfig(Configs.Chassis.TurnConfig),
+                        new MotorIOTalonFX(Constants.CanIds.BackLeftDriveId, Configs.Chassis.DriveConfig),
+                        new MotorIOTalonFX(Constants.CanIds.BackLeftTurnId, Configs.Chassis.TurnConfig),
                         Constants.CanIds.BackLeftEncoderId,
                         Constants.Chassis.BackLeftForwardsAngle),
                     new GyroIOPigeon(Constants.CanIds.PigeonGyroId),
                     new PoseCameraIOPhoton(Constants.Vision.FrontCamConfig),
                     new PoseCameraIOPhoton(Constants.Vision.WebCam),
                     new PoseCameraIOLimelight(Constants.Vision.LimelightOfDoomAndDespair)),
-                new ObjectCameraIOPhoton(Constants.Vision.BackCamConfig));
+                new ObjectCameraIOPhoton(Constants.Vision.BackCamConfig, Constants.Field.CoralDiameter));
 
         m_superstructure =
             new Superstucture(
@@ -148,47 +141,33 @@ public class RobotContainer extends SubsystemBase {
       case DevBot:
         m_swerve =
             new Swerve(
-                RobotBase.isReal()
-                    ? new SwerveIOReal(
-                        new SwerveModule(
-                            new MotorIOTalonFX(Constants.CanIds.FrontRightDriveId)
-                                .withConfig(Configs.Chassis.DriveConfig),
-                            new MotorIOSparkMax(Constants.CanIds.FrontRightTurnId)
-                                .withConfig(Configs.Chassis.TurnConfig),
-                            Constants.CanIds.FrontRightEncoderId,
-                            Constants.Chassis.FrontRightForwardsAngle),
-                        new SwerveModule(
-                            new MotorIOTalonFX(Constants.CanIds.FrontLeftDriveId)
-                                .withConfig(Configs.Chassis.DriveConfig),
-                            new MotorIOSparkMax(Constants.CanIds.FrontLeftTurnId)
-                                .withConfig(Configs.Chassis.TurnConfig),
-                            Constants.CanIds.FrontLeftEncoderId,
-                            Constants.Chassis.FrontLeftForwardsAngle),
-                        new SwerveModule(
-                            new MotorIOTalonFX(Constants.CanIds.BackRightDriveId)
-                                .withConfig(Configs.Chassis.DriveConfig),
-                            new MotorIOSparkMax(Constants.CanIds.BackRightTurnId)
-                                .withConfig(Configs.Chassis.TurnConfig),
-                            Constants.CanIds.BackRightEncoderId,
-                            Constants.Chassis.BackRightForwardsAngle),
-                        new SwerveModule(
-                            new MotorIOTalonFX(Constants.CanIds.BackLeftDriveId)
-                                .withConfig(Configs.Chassis.DriveConfig),
-                            new MotorIOSparkMax(Constants.CanIds.BackLeftTurnId)
-                                .withConfig(Configs.Chassis.TurnConfig),
-                            Constants.CanIds.BackLeftEncoderId,
-                            Constants.Chassis.BackLeftForwardsAngle),
-                        new GyroIOPigeon(Constants.CanIds.PigeonGyroId),
-                        new PoseCameraIOPhoton(Constants.Vision.FrontCamConfig),
-                        new PoseCameraIOPhoton(Constants.Vision.WebCam),
-                        new PoseCameraIOLimelight(Constants.Vision.LimelightOfDoomAndDespair))
-                    : new SwerveIOSim(
-                        new PoseCameraIOSim(Constants.Vision.FrontCamConfig),
-                        new PoseCameraIOSim(Constants.Vision.WebCam),
-                        new PoseCameraIOSim(Constants.Vision.LimelightOfDoomAndDespair)),
-                RobotBase.isReal()
-                    ? new ObjectCameraIOPhoton(Constants.Vision.BackCamConfig)
-                    : new ObjectCameraIOSim(Constants.Vision.BackCamConfig));
+                new SwerveIOReal(
+                    new SwerveModule(
+                    new MotorIOTalonFX(Constants.CanIds.FrontRightDriveId, Configs.Chassis.DriveConfig),
+                    new MotorIOSparkMax(Constants.CanIds.FrontRightTurnId, Configs.Chassis.TurnConfig),
+                    Constants.CanIds.FrontRightEncoderId,
+                    Constants.Chassis.FrontRightForwardsAngle),
+                    new SwerveModule(
+                        new MotorIOTalonFX(Constants.CanIds.FrontLeftDriveId, Configs.Chassis.DriveConfig),
+                        new MotorIOSparkMax(Constants.CanIds.FrontLeftTurnId, Configs.Chassis.TurnConfig),
+                        Constants.CanIds.FrontLeftEncoderId,
+                        Constants.Chassis.FrontLeftForwardsAngle),
+                    new SwerveModule(
+                        new MotorIOTalonFX(Constants.CanIds.BackRightDriveId, Configs.Chassis.DriveConfig),
+                        new MotorIOSparkMax(Constants.CanIds.BackRightTurnId, Configs.Chassis.TurnConfig),
+                        Constants.CanIds.BackRightEncoderId,
+                        Constants.Chassis.BackRightForwardsAngle),
+                    new SwerveModule(
+                        new MotorIOTalonFX(Constants.CanIds.BackLeftDriveId, Configs.Chassis.DriveConfig),
+                        new MotorIOSparkMax(Constants.CanIds.BackLeftTurnId, Configs.Chassis.TurnConfig),
+                        Constants.CanIds.BackLeftEncoderId,
+                        Constants.Chassis.BackLeftForwardsAngle),
+                    new GyroIOPigeon(Constants.CanIds.PigeonGyroId),
+                    new PoseCameraIOPhoton(Constants.Vision.FrontCamConfig),
+                    new PoseCameraIOPhoton(Constants.Vision.WebCam),
+                    new PoseCameraIOLimelight(Constants.Vision.LimelightOfDoomAndDespair)),
+                new ObjectCameraIOPhoton(Constants.Vision.BackCamConfig, Constants.Field.CoralDiameter)
+            );
 
         m_superstructure =
             new Superstucture(
@@ -210,7 +189,7 @@ public class RobotContainer extends SubsystemBase {
                     new PoseCameraIOSim(Constants.Vision.FrontCamConfig),
                     new PoseCameraIOSim(Constants.Vision.WebCam),
                     new PoseCameraIOSim(Constants.Vision.LimelightOfDoomAndDespair)),
-                new ObjectCameraIOSim(Constants.Vision.BackCamConfig));
+                new ObjectCameraIOSim(Constants.Vision.BackCamConfig, RobotState.getSimArena()));
 
         m_superstructure =
             new Superstucture(
