@@ -26,8 +26,8 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearAcceleration;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.RobotBase;
-import frc.hawkLib.hardware.TOF.TOFConfig;
-import frc.hawkLib.hardware.motor.MotorConfig;
+import frc.shared.hardware.TOF.TOFConfig;
+import frc.shared.hardware.motor.MotorConfig;
 
 public class Configs {
 

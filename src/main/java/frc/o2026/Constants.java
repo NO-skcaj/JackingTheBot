@@ -25,7 +25,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Voltage;
-import frc.hawkLib.hardware.vision.VisionConfig;
+import frc.shared.hardware.vision.VisionConfig;
 
 import java.util.ArrayList;
 import java.util.List;

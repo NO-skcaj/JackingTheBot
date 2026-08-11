@@ -11,9 +11,9 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import frc.hawkLib.hardware.SimBattery;
-import frc.hawkLib.hardware.motor.ctre.OrchestraOrchestrator;
-import frc.hawkLib.reefscape.ReefscapeScoring;
+import frc.shared.hardware.SimBattery;
+import frc.shared.hardware.motor.ctre.OrchestraOrchestrator;
+import frc.shared.reefscape.ReefscapeScoring;
 
 import java.util.stream.Stream;
 import org.ironmaple.simulation.gamepieces.GamePieceOnFieldSimulation;
