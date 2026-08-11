@@ -145,7 +145,7 @@ public class SwerveIOSim implements SwerveIO {
 
     if (RobotState.isSimIntaking() && !RobotState.isHasCoral()) {
       m_intake.startIntake();
-      if (m_intake.obtainGamePieceFromIntake() || ReefscapeIntakeUtil.hasNewCoralFromCollector()) {
+      if (m_intake.obtainGamePieceFromIntake() || ReefscapeIntakeUtil.hasNewCoralFromCollector(RobotState.getSimArena())) {
         RobotState.setHasCoral(true);
       }
     } else {
