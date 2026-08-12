@@ -6,8 +6,12 @@
 
 package frc.o2026;
 
+import static edu.wpi.first.units.Units.Meters;
+
 import com.pathplanner.lib.commands.PathfindingCommand;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -75,6 +79,14 @@ public class Robot extends LoggedRobot {
         RobotState.getSimArena().gamePiecesOnField().stream()
             // .filter(gp -> gp.getType() == "Coral")
             .map(GamePieceOnFieldSimulation::getPose3d)
+            .map(
+                pos ->
+                    pos.plus(
+                        new Transform3d(
+                            0.0,
+                            0.0,
+                            Constants.Field.CoralDiameter.div(2.0).in(Meters),
+                            Rotation3d.kZero)))
             .toList();
     var scoredCoral = ReefscapeScoring.getInstance().getCoral(); // Also contains held coral
 

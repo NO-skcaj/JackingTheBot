@@ -365,43 +365,69 @@ public class Superstucture extends SubsystemBase {
         .andThen(() -> setState(DesiredState.groundIntake.with(RollerState.holdingCoral)));
   }
 
-  private static Time AnimationTime = Seconds.of(2.0);
+  private static Time AnimationTime = Seconds.of(0.5);
+
   public Command score(boolean isRight) {
 
-    return defer(
-        () -> {
-          Pose3d fieldStartPos = getCoral().orElse(RobotState.getPoseEst());
-          String pipeId = String.valueOf(RobotState.nearestReefTagFiducial()) + 
-                          String.valueOf(armLevelFromState()) +
-                          (isRight ? "R" : "L");
-          Pose3d fieldEndPos = ReefscapeScoring.getInstance().getReefs().get(pipeId).getFirst();
+    return new WaitUntilCommand(this::isAtSetpoint)
+        .andThen(
+            defer(
+                () -> {
+                  Pose3d fieldStartPos = getCoral().orElse(RobotState.getPoseEst());
+                  String pipeId =
+                      String.valueOf(RobotState.nearestReefTagFiducial())
+                          + String.valueOf(armLevelFromState())
+                          + (isRight ? "R" : "L");
+                  Logger.recordOutput("lastPipViz", pipeId);
+                  Pose3d fieldEndPos =
+                      ReefscapeScoring.getInstance().getReefs().get(pipeId).getFirst();
 
-          Command scoreAction =
-              run(() -> setState(m_desiredState.with(RollerState.scoringCoral)))
-                  .until(() -> !m_sensor.isDetected())
-                  .withTimeout(1.0)
-                  .andThen(runOnce(() -> setState(m_desiredState.with(RollerState.idle))))
-                  .andThen(runOnce(() -> RobotState.setHasCoral(false)));
+                  Command scoreAction =
+                      run(() -> setState(m_desiredState.with(RollerState.scoringCoral)))
+                          .until(() -> !m_sensor.isDetected())
+                          .withTimeout(1.0)
+                          .andThen(runOnce(() -> setState(m_desiredState.with(RollerState.idle))));
 
-          Timer vizAnimator = new Timer();
+                  Timer vizAnimator = new Timer();
 
-          Command vizStart = Util.runOnce(() -> {
-             vizAnimator.start();
-          });
+                  Command vizStart =
+                      Util.runOnce(
+                          () -> {
+                            vizAnimator.start();
+                          });
 
-          Command vizRun = Util.run(() ->
-             ReefscapeScoring.getInstance()
-                .setHeldCoral(
-                    Optional.of(
-                        fieldStartPos.interpolate(
-                            fieldEndPos, vizAnimator.get() / AnimationTime.in(Seconds)))));
+                  Command vizRun =
+                      Util.run(
+                          () ->
+                              ReefscapeScoring.getInstance()
+                                  .setHeldCoral(
+                                      Optional.of(
+                                          new Pose3d(
+                                              fieldStartPos
+                                                  .getTranslation()
+                                                  .interpolate(
+                                                      fieldEndPos.getTranslation(),
+                                                      vizAnimator.get()
+                                                          / AnimationTime.in(Seconds)),
+                                              fieldStartPos
+                                                  .getRotation()
+                                                  .interpolate(
+                                                      fieldEndPos.getRotation(),
+                                                      vizAnimator.get()
+                                                          / AnimationTime.in(Seconds))))));
 
-          var updateSim = Util.runOnce(() ->
-                ReefscapeScoring.getInstance().score(pipeId));
+                  var updateSim = Util.runOnce(() -> {
+                    ReefscapeScoring.getInstance().score(pipeId);
+                    RobotState.setHasCoral(false);
+                  });
 
-
-          return vizStart.andThen(scoreAction.alongWith(vizRun.withDeadline(new WaitCommand(AnimationTime)))).andThen(updateSim);
-        });
+                  return vizStart
+                      .andThen(
+                          scoreAction.alongWith(
+                              vizRun
+                                  .withDeadline(new WaitCommand(AnimationTime))
+                                  .andThen(updateSim)));
+                }));
   }
 
   public Command home() {

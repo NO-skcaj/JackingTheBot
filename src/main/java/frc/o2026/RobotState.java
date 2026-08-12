@@ -12,11 +12,9 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.units.measure.AngularVelocity;
 import frc.shared.hardware.vision.poseVision.PoseCameraIO;
-
 import java.util.List;
 import java.util.Set;
 import java.util.stream.IntStream;
-
 import lombok.Getter;
 import lombok.Setter;
 import org.ironmaple.simulation.SimulatedArena;
@@ -44,17 +42,27 @@ public class RobotState {
 
   public static Pose3d nearestTag() {
 
-    return getPoseEst().nearest(IntStream.range(6, 23).boxed().map(PoseCameraIO::getTagPose).toList());
+    return getPoseEst()
+        .nearest(IntStream.range(6, 23).boxed().map(PoseCameraIO::getTagPose).toList());
   }
-  
+
   public static Pose3d nearestReefTag() {
 
-    return getPoseEst().nearest(List.of(IntStream.range(6, 12), IntStream.range(17, 23)).stream()
-        .map(IntStream::boxed).flatMap(i -> i).map(PoseCameraIO::getTagPose).toList());
+    return getPoseEst()
+        .nearest(
+            List.of(IntStream.range(6, 12), IntStream.range(17, 23)).stream()
+                .map(IntStream::boxed)
+                .flatMap(i -> i)
+                .map(PoseCameraIO::getTagPose)
+                .toList());
   }
 
   public static int nearestReefTagFiducial() {
 
-    return Constants.Vision.TagLayout.getTags().stream().filter(tag -> nearestReefTag().equals(tag.pose)).map(tag -> tag.ID).toList().get(0);
+    return Constants.Vision.TagLayout.getTags().stream()
+        .filter(tag -> nearestReefTag().equals(tag.pose))
+        .map(tag -> tag.ID)
+        .toList()
+        .get(0);
   }
 }

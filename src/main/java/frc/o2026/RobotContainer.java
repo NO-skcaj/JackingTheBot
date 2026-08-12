@@ -19,6 +19,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.o2026.subsystems.Superstucture;
 import frc.o2026.subsystems.drivebase.Swerve;
@@ -292,28 +293,21 @@ public class RobotContainer extends SubsystemBase {
 
     Function<Boolean, Command> autoScore =
         (isRight) ->
-            m_swerve.defer(
-                () -> {
-                  var pointOpt = m_superstructure.getDrivePointToScore(isRight);
-                  if (pointOpt.isPresent())
-                    return m_swerve
-                        .run(() -> m_swerve.setState(DesiredState.pidPose.with(pointOpt.get())))
-                        .until(m_swerve::isAtPidPose)
-                        .andThen(
-                            m_superstructure
-                                .score(isRight)
-                                    .onlyIf(m_superstructure::isAtSetpoint)
-                                .alongWith(
-                                    m_swerve.run(
-                                        () ->
-                                            m_swerve.setState(
-                                                DesiredState.pidPose.with(pointOpt.get())))));
-                  else return Commands.none();
-                });
+            m_swerve
+                .defer(
+                    () -> {
+                      var pointOpt = m_superstructure.getDrivePointToScore(isRight);
+                      if (pointOpt.isPresent())
+                        return m_swerve
+                            .run(() -> m_swerve.setState(DesiredState.pidPose.with(pointOpt.get())))
+                            .until(m_swerve::isAtPidPose);
+                      else return Commands.none();
+                    })
+                .andThen(new WaitUntilCommand(m_swerve::isAtPidPose))
+                .andThen(m_superstructure.score(isRight).onlyIf(m_superstructure::isAtSetpoint));
 
-    m_driver.rightBumper().whileTrue(autoScore.apply(true));
-
-    m_driver.leftBumper().whileTrue(autoScore.apply(false));
+    m_driver.rightBumper().and(RobotState::isHasCoral).whileTrue(autoScore.apply(true));
+    m_driver.leftBumper().and(RobotState::isHasCoral).whileTrue(autoScore.apply(false));
 
     // Util.sendLambda(
     //     "yUp",
